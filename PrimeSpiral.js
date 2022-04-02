@@ -10,7 +10,7 @@ let direction = 0;
 let primes = [];
 
 function setup() {
-  createCanvas(500, 500);
+  createCanvas(window.innerWidth, window.innerHeight);
   x = (width/2)/stepSize;
   y = (height/2)/stepSize;
   background(0);
@@ -33,7 +33,7 @@ function draw() {
     }
 
     
-    if(x*stepSize > 500){
+    if(x*stepSize > window.innerWidth){
       frameRate(0);
       break;
     }
