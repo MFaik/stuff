@@ -1,4 +1,4 @@
-# P5Gen
+# stuff
 
 [GameOfLife](GameOfLife.html) <br>
 [PrimeSpiral](PrimeSpiral.html)
