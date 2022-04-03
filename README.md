@@ -1,5 +1,5 @@
 # stuff
 
-[GameOfLife](GameOfLife.html) <br>
+[GameOfLife](GameOfLife) <br>
 [BugOfLife](BugOfLife) <br>
-[PrimeSpiral](PrimeSpiral.html)
+[PrimeSpiral](PrimeSpiral)
