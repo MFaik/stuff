@@ -7,4 +7,4 @@
 
 # 
 
-[mfaik.github.io/stuff](mfaik.github.io/stuff)
+[mfaik.github.io/stuff](https://mfaik.github.io/stuff/)
