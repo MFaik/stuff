@@ -121,7 +121,7 @@ function draw() {
 }
 
 function keyPressed() {
-  if(key == 'p'){
+  if(key == 'p' || key == 'P'){
     if(stopped){
       stroke(0);
       grid.redraw();
@@ -131,7 +131,7 @@ function keyPressed() {
       grid.redraw();
       stopped = true;
     }
-  } else if(key == 'r'){
+  } else if(key == 'r' || key == 'R'){
     for(let y = 0;y < grid.height;y++){
       for(let x = 0;x < grid.width;x++){       
         if(random(1) > initRand)
@@ -142,7 +142,7 @@ function keyPressed() {
     }
     grid.update();
     grid.redraw();
-  } else if(key == 'c'){
+  } else if(key == 'c' || key == 'C'){
     for(let y = 0;y < grid.height;y++){
       for(let x = 0;x < grid.width;x++){
         grid.unset(x,y);
