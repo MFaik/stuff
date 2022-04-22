@@ -1,6 +1,6 @@
 let jumpButton,retryButton,keke,ground,groundGap,count = -1;
 let gameOverTexts = [
-    "Don't give up","You can do this","You are getting better","You can do it if you try again",
+    "Don't give up!","You can do this","You are getting better","You can do it if you try again",
     "Believe in yourself","You are going to succeed","All you need is a little determination"
 ]
 function setup() {
@@ -51,7 +51,7 @@ function setup() {
     retryButton.onRelease = ()=>{
         retryButton.color = "#FFFFFF";
 
-        keke = new Rectangle(width/6,2*height/3-100,50,100,color(100,100,100));
+        //keke = new Rectangle(width/6,2*height/3-100,50,100,color(100,100,100));
     }
 }
 

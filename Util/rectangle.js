@@ -1,3 +1,5 @@
+let realTime = () => deltaTime/1000;
+
 class Rectangle{
     constructor(x, y, width, height, color) {
         this.x = x;
@@ -13,8 +15,8 @@ class Rectangle{
     tick(){
         this.velocityY += this.gravity*realTime();
 
-        this.x += this.velocityX;
-        this.y += this.velocityY;
+        this.x += this.velocityX*realTime();
+        this.y += this.velocityY*realTime();
     }
     
     draw() {
