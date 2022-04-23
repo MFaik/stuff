@@ -2,7 +2,8 @@
 
 [GameOfLife](GameOfLife) <br>
 [BugOfLife](BugOfLife) <br>
-[PrimeSpiral](PrimeSpiral)
+[PrimeSpiral](PrimeSpiral) <br>
+[Competiton](Competiton)
 
 
 # 
