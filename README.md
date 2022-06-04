@@ -3,8 +3,8 @@
 [GameOfLife](GameOfLife) <br>
 [BugOfLife](BugOfLife) <br>
 [PrimeSpiral](PrimeSpiral) <br>
-[Competiton](Competiton)
-
+[Competiton](Competiton) <br>
+[Exile](Exile)
 
 # 
 
