@@ -4,7 +4,8 @@
 [BugOfLife](BugOfLife) <br>
 [PrimeSpiral](PrimeSpiral) <br>
 [Competiton](Competiton) <br>
-[Exile](Exile)
+[Exile](Exile)<br>
+[SierpinskiTriangle](SierpinskiTriangle)
 
 # 
 
