@@ -6,7 +6,8 @@
 [Competiton](Competiton) <br>
 [Exile](Exile)<br>
 [SierpinskiTriangle](SierpinskiTriangle)<br>
-[SkewedMirror](SkewedMirror)
+[SkewedMirror](SkewedMirror)<br>
+[HexagonPaint](HexagonPaint)
 
 # 
 
