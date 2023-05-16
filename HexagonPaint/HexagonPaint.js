@@ -19,7 +19,6 @@ function mousePressed() {
   let x = floor((mouseX+magic+(3*hexLen/4)) / (3*hexLen/2));
   let y = floor((mouseY+hexHeight*((x+1)%2))/(2*hexHeight));
   // console.log("(" + x + ", " + y + ")");
-  console.log([x,y] + " " + tiles[[x,y]])
   if(!tiles[[x,y]]){
     drawHex(x, y, color(0, 0, 0), color(255, 255, 255));
     tiles[[x,y]] = true;
