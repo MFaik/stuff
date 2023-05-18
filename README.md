@@ -2,6 +2,7 @@
 
 [GameOfLife](GameOfLife) <br>
 [BugOfLife](BugOfLife) <br>
+[LangtonAnt](LangtonAnt)<br>
 [PrimeSpiral](PrimeSpiral) <br>
 [Competiton](Competiton) <br>
 [Exile](Exile)<br>
