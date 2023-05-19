@@ -50,7 +50,7 @@ function setup() {
         color(10, 40, 11),//gas
     ];
     //this line makes sure that the tiles that aren't set are colored as empty tiles
-    tileColors[undefined] = tileColors[0];
+    tileColors[EMPTY] = tileColors[0];
     frameRate(-1);
 }
 
@@ -65,6 +65,7 @@ function keyPressed() {
     }
 }
 
+let lastMouseX = -1, lastMouseY = -1;
 function mouse(click) {
     let x = floor(mouseX/cellSize), y = floor(mouseY/cellSize);
     if(x >= gridWidth || y >= gridHeight-100/cellSize) {
@@ -94,13 +95,28 @@ function mouse(click) {
                 }
             }
         }
+        
+        lastMouseX = -1;
+        lastMouseY = -1;
     } else {
-        //Place Tile
-        if(currentTile)
-            grid[idx(x,y)] = currentTile;
-        else
-        //We set the empty tile as undefined so we don't need to set every tile at the start
-            grid[idx(x,y)] = undefined;
+        let tile = currentTile ? currentTile : EMPTY;
+        if(click || lastMouseX == -1 || (x-lastMouseX == 0 && y-lastMouseY == 0)){
+            grid[idx(x,y)] = tile;
+        } else {
+            let xInc, yInc;
+            if(abs(x-lastMouseX) > abs(y-lastMouseY)) {
+                xInc = x > lastMouseX ? 1 : -1;
+                yInc = (y-lastMouseY)/abs(x-lastMouseX); 
+            } else {
+                yInc = y > lastMouseY ? 1 : -1;
+                xInc = (x-lastMouseX)/abs(y-lastMouseY); 
+            }
+            for(;abs(x-lastMouseX) > 0.001 || abs(y-lastMouseY) > 0.001;lastMouseX += xInc,lastMouseY += yInc){
+               grid[idx(floor(lastMouseX),floor(lastMouseY))] = tile;
+            }
+        }
+        lastMouseX = x;
+        lastMouseY = y;
     }
 }
 
