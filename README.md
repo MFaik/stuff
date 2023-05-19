@@ -8,8 +8,8 @@
 [Exile](Exile)<br>
 [SierpinskiTriangle](SierpinskiTriangle)<br>
 [SkewedMirror](SkewedMirror)<br>
-[HexagonPaint](HexagonPaint)
-[Sand](Sand)
+[HexagonPaint](HexagonPaint)<br>
+[Sand](Sand) <br>
 # 
 
 [mfaik.github.io/stuff](https://mfaik.github.io/stuff/)
