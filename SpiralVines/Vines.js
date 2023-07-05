@@ -7,7 +7,7 @@ let SPIRAL_INTERVAL = 10;
 let SPIRAL_INTERVAL_INCREASE_BY_RADIUS = 0;
 const DRAW_SPEED = 1;
 
-const DRAW_CIRCLES = false;
+let DRAW_CIRCLES = false;
 
 //spiral{x, y, radius, children[spiral_id]}
 let spirals = [];
