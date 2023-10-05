@@ -1,75 +1,78 @@
 html, body {
+    margin: 0;
+    padding: 0;
+
     background: black;
     color: aliceblue;
-  
+
     overflow: hidden;
-  }
-  
-  canvas {
+}
+
+canvas {
     display: block;
-  }
-  
-  #settings {
+}
+
+#settings {
     display: flex;
     flex-direction: column;
     gap: 10px; 
     padding: 20px;
-  
+
     position: absolute;
     top: 0;
     right: max(min(-30vw, -400px), -90vw);
     width: min(max(30vw, 400px), 90vw);
-  
+
     opacity: 0.9;
     background-color: black;
     box-sizing: border-box;
     border: solid 10px;
     border-color: white;
     transition: 0.2s;
-  }
-  #settings[open="open"] {
+}
+#settings[open="open"] {
     right: 0;
-  }
-  
-  .inputParent {
+}
+
+.inputParent {
     display: flex;
-  }
-  .inputParent>input {
+}
+.inputParent>input {
     min-width: 0;
     flex: 1;
-  }
-  input:first-child {
+}
+input:first-child {
     flex: 10;
-  }
-  
-  .submitButton {
+}
+
+.submitButton {
     box-sizing: content-box;
     border: solid 10px;
     border-color: black;
-  }
-  
-  .submitButton, #settingsToggle {
+}
+
+.submitButton, #settingsToggle {
     background-color: white;
     transition: 0.3s;
-  }
-  
-  .submitButton:hover, #settingsToggle:hover {
+}
+
+.submitButton:hover, #settingsToggle:hover {
     background-color: rgb(40, 40, 40);
-  }
-  
-  #settingsToggle {
+}
+
+#settingsToggle {
     position: absolute;
     left: -30px;
     width: 20px;
     height: 100px;
     top: 0;
-  
+
     border: none;
     border-radius: 100% 0% 0% 100%;
-  }
-  
-  #submit {
+}
+
+#submit {
     display:grid;
     grid-template-columns: 1fr 1fr 1fr;
     height: 50px;
-  }
+}
