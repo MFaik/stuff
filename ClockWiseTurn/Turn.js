@@ -14,7 +14,7 @@ let playPNG, pausePNG, slowPNG, normalPNG, fastPNG, stepPNG;
 
 const tileCount = 4;
 let currentTile = 1;
-const EMPTY = undefined, GROUND = 1, SAND = 2, WATER = 3, GAS = 4, UPWATER = 998,RIGHTWATER = 999;
+const EMPTY = 0, LEFT = 1, UP = 2, RIGHT = 3, DOWN = 4;
 
 let tileColors = [];
 
@@ -40,17 +40,20 @@ function setup() {
     gridHeight = floor(height/cellSize);
     idx = (x, y) => x+y*gridWidth;
             createCanvas(width, height);
+    for(let i = 0;i < gridWidth*gridHeight;i++){
+        grid[i] = EMPTY;
+    }
+
     noStroke();
     background(60);
     tileColors = [
         color(60),//bg
-        color(255,255,255),//ground
-        color(194,178,128),//sand
-        color(100, 100, 255),//water
-        color(10, 40, 11),//gas
+        color(255, 0, 0),//ground
+        color(255,255,255),//sand
+        color(0, 255, 0),//water
+        color(0, 0, 255),//gas
     ];
-    //this line makes sure that the tiles that aren't set are colored as empty tiles
-    tileColors[EMPTY] = tileColors[0];
+    
     frameRate(-1);
 }
 
@@ -217,87 +220,17 @@ function UI() {
 }
 
 function simulate() {
-    for(let x = 0;x < gridWidth;x++) {
-        if(grid[idx(x, gridHeight-1)] != EMPTY 
-            && grid[idx(x, gridHeight-1)] != GROUND) {
-            grid[idx(x,gridHeight-1)] = EMPTY;
-        }
-    }
-    for(let y = gridHeight-2;y >= 0;y--) {
-        for(let x = 0;x < gridWidth;x++) {
-            //SAND--------------------------------------------------------------
-            if(grid[idx(x,y)] == EMPTY)
-                continue;
-            if(grid[idx(x, y)] == SAND) {
-                if(grid[idx(x, y+1)] == GROUND)
-                    continue;
-                for(let add of [0, -1, 1]) {
-                    if(x+add < 0 || x+add >= gridWidth)
-                        continue;
-                    //We check if there is sand to the right so that sand that's falling straight down gets priority
-                    //Without this when there is a empty tile or water instead of the sand on top of it falling down, the sand on the left goes to that position
-                    //this causes an effect such that the empty tile/water actually climbs to the left instead of straight up
-                    //We don't need to do this for left because tiles are calculated left to right
-                    if(add == 1 && grid[idx(x+1,y)] == SAND)
-                        continue;
-                    if(grid[idx(x+add,y+1)] == EMPTY) {
-                        grid[idx(x,y)] = EMPTY;
-                        grid[idx(x+add,y+1)] = SAND;
-                        break;
-                    } else if(grid[idx(x+add,y+1)] == WATER) {
-                        //UPWATER exists so that the water doesn't move more than one tile up per step
-                        //We don't need to do this for falling down sand/water because tiles are calculated bottom to top
-                        grid[idx(x,y)] = UPWATER;
-                        grid[idx(x+add,y+1)] = SAND;
-                        break;
-                    }
-                }
-            }
-            //WATER-------------------------------------------------------------
-            if(grid[idx(x, y)] == WATER) {
-                if(grid[idx(x, y+1)] != EMPTY) {
-                    for(let add of random() < 0.5 ? [-1,1] : [1,-1]) {
-                        if(x+add < 0 || x+add >= gridWidth)
-                            continue;
-                        if(grid[idx(x+add,y)] == EMPTY) {
-                            grid[idx(x,y)] = EMPTY;
-                            //RIGHTWATER exists so that the water doesn't move more than one tile right per step
-                            //We don't need to do this for water that's going left because tiles are calculated left to right
-                            grid[idx(x+add,y)] = add == -1 ? WATER : RIGHTWATER;
-                            break;
-                        }
-                    }
-                } else {
-                    grid[idx(x,y)] = EMPTY;
-                    grid[idx(x, y+1)] = WATER;
-                }            
-            }
-            if(grid[idx(x, y)] == RIGHTWATER) {
-                grid[idx(x,y)] = WATER;
-            }
-            //GAS---------------------------------------------------------------
-            //if(grid[idx(x, y)] == GAS) {
-                
-            //}
-        }
-    }
-    for(let i = 0;i < gridWidth*gridHeight;i++) {
-        if(grid[i] == UPWATER)
-            grid[i] = WATER;
-    }
+    for(let )
 }
 
 function drawGrid() {
     let lastTile = -1; 
     for(let x = 0;x < gridWidth;x++) {
         for(let y = 0;y < gridHeight;y++) {
-            if(grid[idx(x,y)] === oldGrid[idx(x,y)])
-                continue;
             if(lastTile !== grid[idx(x,y)])
                 fill(tileColors[grid[idx(x,y)]]);
             rect(x*cellSize, y*cellSize, cellSize, cellSize);
             lastTile = grid[idx(x,y)];
         }
     }
-    oldGrid = grid.slice();
 }
