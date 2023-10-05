@@ -10,6 +10,8 @@
 [SkewedMirror](SkewedMirror)<br>
 [HexagonPaint](HexagonPaint)<br>
 [Sand](CellularAutomata/Sand) <br>
+[Sand](Sand) <br>
+[SpiralVines](SpiralVines) <br>
 # 
 
 [mfaik.github.io/stuff](https://mfaik.github.io/stuff/)
