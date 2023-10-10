@@ -11,6 +11,7 @@
 [HexagonPaint](HexagonPaint)<br>
 [Sand](CellularAutomata/Sand) <br>
 [SpiralVines](SpiralVines) <br>
+[Balls](Simulation/Balls) <br>
 # 
 
 [mfaik.github.io/stuff](https://mfaik.github.io/stuff/)
