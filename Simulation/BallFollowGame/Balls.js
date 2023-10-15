@@ -4,17 +4,20 @@ var width, height;
 var fpsColor;
 const ITERCNT = 1000;
 const MINSIZE = 10;
+const MAXSIZE = 20;
+const MAXSPEED = 120;
+const PLAYDURATION = 15;
 const MENU = 0, GETREADY = 1, PLAYING = 2, END = 3, WIN = 4, LOSE = 5;
-let gameState = GETREADY;
+let gameState = MENU;
 
 let settings = {
-    playDuration: 15, 
-    maxSpeed: 180,
-    maxSize: 20,
+    doubleDuration: false, 
+    doubleSpeed: false,
+    sameSize: false,
     sameColor: false,
-    passThrough: false,
-    followCnt: 1,
+    ballInteractions: true,
 }
+let menuRows = [];
 
 function setup() {
     width = innerWidth;
@@ -24,56 +27,69 @@ function setup() {
     textAlign(CENTER);
     textFont("serif");
 
-    for(let i = 0;i < ITERCNT;i++){
-        let pos = {x: random(60,width-60), y: random(60, height-60)};
-        let maxRadius = min(settings.maxSize, pos.x-30, width-30-pos.x, pos.y-30, height-30-pos.y);
-        for(let obj of objects){
-            maxRadius = min(maxRadius, dis(obj.position, pos)-obj.radius);
-        }
-        if(maxRadius >= MINSIZE){
-            let col = [random(100,255), random(255), random(155)];
-            col.sort(()=>random(10)>5);
-            objects.push({position: pos, 
-                velocity: {x: random(-settings.maxSpeed/fps, settings.maxSpeed/fps), 
-                           y: random(-settings.maxSpeed/fps, settings.maxSpeed/fps)},
-                           radius: random(MINSIZE, maxRadius), mass: pow(maxRadius/10, 2),
-                           col: settings.sameColor ? color(200) 
-                                 : color(...col)});
-
-        }
-    }
-
     frameRate(60);
+
+    let settingCnt = Object.keys(settings).length;
+    let currentCnt = 0;
+    for(let key in settings){
+        menuRows.push(
+            createCheckBox(height/2-(settingCnt+1)*60/2 + currentCnt*60,
+                           camelCaseToHumanCase(key), key)
+        );
+        currentCnt++;
+    }
+    menuRows.push(
+        createPlayButton(height/2-(settingCnt+1)*60/2 + currentCnt*60)
+    );
 }
 
 let startTime = 0;
 function draw() {
-    background(0);
+    let playDuration = PLAYDURATION;
+    if(settings.doubleDuration)
+        playDuration *= 2;
+
+    if(gameState > GETREADY){
+        background(((Date.now() - startTime)/(playDuration*1000))*255);
+    } else {
+        background(0);
+    }
     fill(50);
     rect(30, 30, width-60, height-60);
-    
+ 
     for(let q = 0;q < fps/60;q++)
         physicsUpdate();
 
     if(gameState == PLAYING){
-        if(Date.now() - startTime > settings.playDuration * 1000){
+
+        if(Date.now() - startTime > playDuration * 1000){
             gameState = END;
         }
     }
     
-    //draw circles
-    for(let i = 0;i < objects.length;i++){
-        if(i == 31 || gameState == PLAYING || gameState == END)
-            fill(objects[i].col);
-        else 
-            fill(50);
-        circle(objects[i].position.x, objects[i].position.y, objects[i].radius*2);
+    if(gameState != MENU){
+        for(let i = 0;i < objects.length;i++){
+            if(i == 31 || gameState == PLAYING || gameState == END)
+                fill(objects[i].col);
+            else 
+                fill(50);
+            circle(objects[i].position.x, objects[i].position.y, objects[i].radius*2);
+        }
     }
-    
+
     drawUI();
 }
+
 function mouseClicked() {
-    if(gameState == GETREADY){
+    if(gameState == MENU){
+        if(abs(mouseX - width/2) <= 120){
+            for(let row of menuRows){
+                if(abs(mouseY-row.y) <= 25){
+                    row.click();
+                }
+            }
+        }
+    } else if(gameState == GETREADY){
         gameState = PLAYING;
         startTime = Date.now();
     } else if(gameState == END) {
@@ -84,13 +100,48 @@ function mouseClicked() {
             gameState = LOSE;
         }
     } else if(gameState == WIN || gameState == LOSE){
-        location.reload();
+        gameState = MENU; 
     }
 }
 
-function drawUI(){
+function startGame() {
+    objects = [];
+    for(let i = 0;i < ITERCNT;i++){
+        let pos = {x: random(60,width-60), y: random(60, height-60)};
+
+        let maxRadius = MAXSIZE;
+        if(settings.sameSize)
+            maxRadius = MINSIZE;
+        maxRadius = min(maxRadius, pos.x-30, width-30-pos.x, pos.y-30, height-30-pos.y);
+        for(let obj of objects){
+            maxRadius = min(maxRadius, dis(obj.position, pos)-obj.radius);
+        }
+        if(maxRadius >= MINSIZE){
+            let col = [random(100,255), random(255), random(155)];
+            col.sort(()=>random(10)>5);
+            if(settings.sameColor)
+                col = [200];
+
+            let maxSpeed = MAXSPEED;
+            if(settings.doubleSpeed)
+                maxSpeed *= 2;
+
+            objects.push({position: pos, 
+                velocity: {x: random(-maxSpeed/fps, maxSpeed/fps), 
+                    y: random(-maxSpeed/fps, maxSpeed/fps)},
+                radius: random(MINSIZE, maxRadius), mass: pow(maxRadius/10, 2),
+                col});
+        }
+    }
+
+    gameState = GETREADY;
+}
+
+function drawUI() {
     if(gameState == MENU){
-        //add menu
+        for(let row of menuRows){
+            row.draw();
+        }
     } else if(gameState == GETREADY){
         let obj = objects[31];
         drawBubble(obj.position.x, obj.position.y, 
@@ -112,12 +163,23 @@ function drawUI(){
         textSize(80);
         text(str, width/2, height/2 - 100);
 
+        if(gameState == WIN){
+            let settingCnt = Object.keys(settings).length;
+            let currentCnt = 0;
+            for(let o in settings){
+                if(settings[o])
+                    star(width/2-(settingCnt*80)/2+currentCnt*80+30,
+                         height/2-40, 25, 50);
+                currentCnt++;
+            }
+        }
+
         textSize(50);
         fill(255);
-        text("Click to Restart", width/2, height/2+textSize()-10);
+        text("Click to Restart", width/2, height/2+40);
     }
 }
-function drawBubble(x, y, dis, col, str){
+function drawBubble(x, y, dis, col, str) {
     let strWidth = textWidth(str) + 20;
     let boxLeft = max(x-strWidth/2, 0);
     let boxRight= boxLeft + strWidth;
@@ -140,17 +202,71 @@ function drawBubble(x, y, dis, col, str){
     else 
         text(str, boxLeft + strWidth/2, y + 75+dis);
 }
-
-
+function createCheckBox(y, str, setting) {
+    return {y, str, setting,
+        draw: function() {
+            push();
+            textSize(20);
+            strokeWeight(7);
+            rect(width/2-120, y-25, 40, 40);
+            if(settings[setting]){
+                line(width/2-120, y-25, width/2-120+40, y+15);
+                line(width/2-120, y+15, width/2-120+40, y-25);
+            }
+            textAlign(LEFT);
+            fill(0);
+            text(str, width/2-120 + 60, y);
+            pop();
+        },
+        click: function() {
+            settings[setting] ^= true;
+        }
+    }
+}
+function createPlayButton(y) {
+    return {y, 
+        draw: function() {
+            push();
+            textSize(40);
+            strokeWeight(7);
+            rect(width/2-120, y-25, 240, 60);
+            fill(0);
+            text("Play", width/2, y+15);
+            pop();
+        },
+        click: function(){
+            startGame();
+        }
+    }
+}
+function star(x, y, rIn, rOut) {
+    let angle = TWO_PI / 5;
+    let halfAngle = angle / 2.0;
+    beginShape();
+    for (let a = -PI/2; a < TWO_PI-PI/2; a += angle) {
+        let sx = x + cos(a) * rOut;
+        let sy = y + sin(a) * rOut;
+        vertex(sx, sy);
+        sx = x + cos(a + halfAngle) * rIn;
+        sy = y + sin(a + halfAngle) * rIn;
+        vertex(sx, sy);
+    }
+    endShape(CLOSE);
+}
+function camelCaseToHumanCase(str) {
+    return str.match(/^[a-z]+|[A-Z][a-z]*/g).map(function(x){
+        return x[0].toUpperCase() + x.substr(1).toLowerCase();
+    }).join(' ');
+}
 
 function isCircleColliding(a, b) {
     return dis(a.position, b.position) < (a.radius+b.radius);
 }
-
 const gridSize = 64;//can somebody explain why this is 64?
     function physicsUpdate() {
         if(gameState != PLAYING)
             return;
+
         if(!settings.passThrough)
             gridCheck();
 
