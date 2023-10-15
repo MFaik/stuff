@@ -12,6 +12,7 @@
 [Sand](CellularAutomata/Sand) <br>
 [SpiralVines](SpiralVines) <br>
 [Balls](Simulation/Balls) <br>
+[BallFollow](Simulation/BallFollowGame)  <br>
 # 
 
 [mfaik.github.io/stuff](https://mfaik.github.io/stuff/)
