@@ -263,19 +263,19 @@ function isCircleColliding(a, b) {
     return dis(a.position, b.position) < (a.radius+b.radius);
 }
 const gridSize = 64;//can somebody explain why this is 64?
-    function physicsUpdate() {
-        if(gameState != PLAYING)
-            return;
+function physicsUpdate() {
+    if(gameState != PLAYING)
+        return;
 
-        if(!settings.passThrough)
-            gridCheck();
+    if(settings.ballInteractions)
+        gridCheck();
 
-        //apply velocity
-        for(let obj of objects){
-            wallCheck(obj);
-            add(obj.position, obj.velocity);
-        }
+    //apply velocity
+    for(let obj of objects){
+        wallCheck(obj);
+        add(obj.position, obj.velocity);
     }
+}
 
 function gridCheck(){
     let grid = Array(gridSize*gridSize);
