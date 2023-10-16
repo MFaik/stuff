@@ -213,8 +213,8 @@ function createCheckBox(y, str, setting) {
                 line(width/2-120, y-25, width/2-120+40, y+15);
                 line(width/2-120, y+15, width/2-120+40, y-25);
             }
+            fill(255);
             textAlign(LEFT);
-            fill(0);
             text(str, width/2-120 + 60, y);
             pop();
         },
@@ -230,7 +230,7 @@ function createPlayButton(y) {
             textSize(40);
             strokeWeight(7);
             rect(width/2-120, y-25, 240, 60);
-            fill(0);
+            fill(255);
             text("Play", width/2, y+15);
             pop();
         },
