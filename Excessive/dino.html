@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>SPACE DINO</title>
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height,
+    user-scalable=no, initial-scale=1, maximum-scale=1"
+    />
+    <script src="https://unpkg.com/sounds-some-sounds@3.0.0/build/index.js"></script>
+    <script src="https://unpkg.com/gif-capture-canvas@1.1.0/build/index.js"></script>
+    <script src="https://unpkg.com/pixi.js@5.3.0/dist/pixi.min.js"></script>
+    <script src="https://unpkg.com/pixi-filters@3.1.1/dist/pixi-filters.js"></script>
+    <script src="https://unpkg.com/crisp-game-lib@1.1.1/docs/bundle.js"></script>
+
+<script>
+title = "SPACE DINO";
+
+description = `
+[HOLD] Fly
+`;
+
+characters = [];
+
+options = {
+  isPlayingBgm: true,
+  isReplayEnabled: true,
+  seed: 14,
+};
+
+let planetAngle = 0;
+const dinoMaxSpeed = 1;
+const groundY = 60;
+let dinoPos = groundY;
+let dinoSpeed = 0;
+let scoredLastFrame = false;
+
+let lines = [];
+
+function update() {
+  if(!ticks){
+    dinoPos = groundY;
+    lines = [];
+  }
+
+  let ang = -difficulty * PI/90;
+  planetAngle += ang;
+  color("black");
+  rect(42.5, 67.5, 15, 15);
+  for(let d = 0;d < 360;d += 30)
+    rect(vec(47, 72).addWithAngle(planetAngle + d, 8), 6, 6);
+  
+  if(ticks % (120/difficulty) < 1){
+    lines.push({ang: PI, height: rnd(15, 40)});
+  }
+  lines = remove(lines, (l) => {
+    color("white");
+    line(vec(50, 72).addWithAngle(l.ang, l.height), 
+      vec(50, 72).addWithAngle(l.ang, l.height + 20));
+    color("red");
+    line(vec(50, 72), vec(50, 72).addWithAngle(l.ang, l.height));
+    line(vec(50, 72).addWithAngle(l.ang, l.height + 20), 
+          vec(50, 72).addWithAngle(l.ang, 100));
+    l.ang += ang;
+    return l.ang > -PI;
+  });
+  
+  color("blue");
+  if(input.isJustPressed){
+    play("click");
+  }
+  if(input.isPressed){
+    if(dinoSpeed >= 0){
+      particle(47, dinoPos, 10, 5, PI/2, PI/4);
+    } else {
+      particle(47, dinoPos, 1, 3, PI/2, PI/8);
+    }
+    dinoSpeed += (-dinoMaxSpeed * difficulty - dinoSpeed) * 0.1
+  } else {
+    dinoSpeed += (dinoMaxSpeed * difficulty - dinoSpeed) * 0.1
+  }
+  
+  dinoPos += dinoSpeed;
+  dinoPos = clamp(dinoPos, 0, groundY);
+  let col = rect(47, dinoPos, 6, 6);
+  if (col.isColliding.rect.red) {
+    play("explosion");
+    end();
+  }
+  if (col.isColliding.rect.white) {
+    if (!scoredLastFrame){
+      addScore( difficulty * 37 + dinoPos, 47, dinoPos);
+      play("score");
+    }
+    scoredLastFrame = true;
+  } else {
+    scoredLastFrame = false;
+  }
+}
+
+addEventListener("load", onLoad);
+</script>
+
+  </head>
+  <body style="background: #ddd"></body>
+</html>

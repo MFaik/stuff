@@ -1,5 +1,6 @@
 # stuff
 
+[SmallGames](Execcesive) <br>
 [GameOfLife](CellularAutomata/GameOfLife) <br>
 [BugOfLife](CellularAutomata/BugOfLife) <br>
 [LangtonAnt](CellularAutomata/LangtonAnt)<br>
