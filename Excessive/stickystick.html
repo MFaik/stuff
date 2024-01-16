@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>CRUSHING WHEEL</title>
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height,
+    user-scalable=no, initial-scale=1, maximum-scale=1"
+    />
+    <script src="https://unpkg.com/sounds-some-sounds@3.0.0/build/index.js"></script>
+    <script src="https://unpkg.com/gif-capture-canvas@1.1.0/build/index.js"></script>
+    <script src="https://unpkg.com/pixi.js@5.3.0/dist/pixi.min.js"></script>
+    <script src="https://unpkg.com/pixi-filters@3.1.1/dist/pixi-filters.js"></script>
+    <script src="https://unpkg.com/crisp-game-lib@1.1.1/docs/bundle.js"></script>
+
+<script>
+title = "CRUSHING WHEEL";
+
+description = `
+[HOLD]turn left
+[DONT]turn right
+`;
+
+characters = [
+`
+
+
+ rrr 
+rbrbr
+rrrrr
+ r r
+`,
+`
+  r
+  r  
+ bbb 
+bbbbb
+bbbbb
+ bbb
+`];
+
+options = {
+  seed: 448,
+  theme: "dark",
+  isReplayEnabled: true,
+  isPlayingBgm: true,
+};
+
+let people = [];
+let bombs = [];
+
+let wheelPos;
+let angle = 0;
+
+let spin = 0;
+
+function update() {
+  if (!ticks) {
+    bombs = [];
+    people = [];
+    wheelPos = vec(50, 80);
+    angle = 0;
+  }
+
+  spin = PI*ticks/30;
+
+  if(ticks%20 < 1) {
+    let pos = vec(rnd(10, 90), rnd(10, 90));
+    while(wheelPos.distanceTo(pos) < 30) pos = vec(rnd(10, 90), rnd(10, 90));
+    if(rnd(1+difficulty) < 1)
+      people.push({pos, timer: 0, vel: vec(rnd(-1, 1), rnd(-1, 1))});
+    else
+      bombs.push({pos, timer: 5});
+  }
+  color("black");
+  people.forEach((p) => {
+    char("a", p.pos);
+  });
+  bombs.forEach((p) => {
+    char("b", p.pos);
+  });
+  
+  color("purple");
+  line(wheelPos, 
+    vec(wheelPos).addWithAngle(spin*Math.sign(cos(angle)), 3.5*cos(angle)));
+  line(wheelPos, 
+    vec(wheelPos).addWithAngle(2*PI/3+spin*Math.sign(cos(angle)), 3.5*cos(angle)));
+  line(wheelPos, 
+    vec(wheelPos).addWithAngle(4*PI/3+spin*Math.sign(cos(angle)), 3.5*cos(angle)));
+  color("black");
+  circlePerp(wheelPos, 7, abs(angle%PI - PI/2)/(PI/2));
+  if (input.isPressed) {
+    angle += 0.06 + 0.01*difficulty;
+  } else {
+    angle -= 0.06 + 0.01*difficulty;
+  }
+  angle = (angle + 2*PI) % (2*PI);
+  
+  wheelPos.addWithAngle(angle, 0.6 + 0.01*difficulty);
+  wheelPos.x = clamp(wheelPos.x, 0, 100);
+  wheelPos.y = clamp(wheelPos.y, 0, 100);
+
+  color("yellow");
+  rect(wheelPos.x-1.5, wheelPos.y + 5, 3, 3)
+  remove(people, (p) => {
+    color("transparent");
+    p.pos.add(p.vel);
+    p.pos.x = clamp(p.pos.x, 0, 100);
+    p.pos.y = clamp(p.pos.y, 0, 100);
+    p.timer += 0.02;
+    if(p.timer > 0.5){
+      p.vel = vec(rnd(-0.7, 0.7), rnd(-0.5, 0.7));
+      if(p.pos.y > 90){
+        p.vel.y = rnd(-0.7, 0);
+      }
+      p.timer = 0;
+    }
+    if(rect(p.pos.x - 3, p.pos.y - 3, 6, 6).isColliding.rect.yellow){
+      color("red");
+      particle(p.pos, 20);
+      addScore(70*difficulty, p.pos);
+      play("click");
+      return true;
+    }
+  });
+  remove(bombs, (p) => {
+    color("transparent");
+    p.pos.y += 0.2;
+    p.timer -= 0.02;
+    if(p.timer <= 0){
+      color("blue");
+      particle(p.pos, 20, 0.5);
+      play("hit");
+      return true;
+    }
+    if(rect(p.pos.x - 3, p.pos.y - 3, 6, 6).isColliding.rect.yellow) {
+      play("explosion");
+      end();
+    }
+  });
+  color("black");
+  rect(wheelPos.x-1.5, wheelPos.y + 5, 3, 3);
+}
+
+function circlePerp(pos, height, p){
+  p = clamp(p, 0.01, 1);
+  let spin = ticks/20
+  let ang = p*PI;
+  let radius = height/(sin(ang/2));
+  let dis = cos(ang/2)*radius;
+  arc(vec(pos).addWithAngle(0, dis), radius, 3,PI+ang/2,PI-ang/2);
+  arc(vec(pos).addWithAngle(0, -dis), radius, 3,ang/2,-ang/2);
+}
+
+
+addEventListener("load", onLoad);
+</script>
+
+  </head>
+  <body style="background: #ddd"></body>
+</html>
