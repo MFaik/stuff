@@ -18,8 +18,8 @@
 title = "CRUSHING WHEEL";
 
 description = `
-[HOLD]turn left
-[DONT]turn right
+[HOLD]turn right
+[DONT]turn left
 `;
 
 characters = [
@@ -54,6 +54,7 @@ let wheelPos;
 let angle = 0;
 
 let spin = 0;
+let decay = 0;
 
 function update() {
   if (!ticks) {
@@ -62,6 +63,9 @@ function update() {
     wheelPos = vec(50, 80);
     angle = 0;
   }
+
+  decay += 0.001;
+  score -= decay;
 
   spin = PI*ticks/30;
 
@@ -120,6 +124,7 @@ function update() {
       color("red");
       particle(p.pos, 20);
       addScore(70*difficulty, p.pos);
+      decay = 0;
       play("click");
       return true;
     }
