@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>CRUSHING WHEEL</title>
+    <title>STICKY STICK</title>
     <meta
       name="viewport"
       content="width=device-width, height=device-height,
@@ -15,145 +15,173 @@
     <script src="https://unpkg.com/crisp-game-lib@1.1.1/docs/bundle.js"></script>
 
 <script>
-title = "CRUSHING WHEEL";
+
+title = "STICKY STICK";
 
 description = `
-[HOLD]turn left
-[DONT]turn right
+[PRESS] 
+change pivot
 `;
 
 characters = [
 `
+   r
+   r
+   r
+   r
 
-
- rrr 
-rbrbr
-rrrrr
- r r
-`,
-`
-  r
-  r  
- bbb 
-bbbbb
-bbbbb
- bbb
+   r
 `];
 
 options = {
-  seed: 448,
-  theme: "dark",
-  isReplayEnabled: true,
   isPlayingBgm: true,
+  isReplayEnabled: true,
+  theme: "dark",
+  seed: 201,
 };
 
-let people = [];
-let bombs = [];
+let stick1, stick2;
 
-let wheelPos;
-let angle = 0;
+const stickLen = 20;
 
-let spin = 0;
+let walls = [];
+let cones = [];
+let gems = [];
+let coins = [];
+let rockets = [];
+
+function smoothstep (min, max, value) {
+  var x = Math.max(0, Math.min(1, (value-min)/(max-min)));
+  return x*x*(3 - 2*x);
+};
+
+let offset1 = 0, offset2 = 0;
 
 function update() {
   if (!ticks) {
-    bombs = [];
-    people = [];
-    wheelPos = vec(50, 80);
-    angle = 0;
+    stick1 = vec(30, 50);
+    stick2 = vec(30+stickLen, 50);
+    walls = [];
+    cones = [];
+    gems = [];
+    coins = [];
+    rockets = [];
+  }
+  
+  let scr = 0.06*difficulty;
+  scr += smoothstep(0, 1, (100-Math.min(stick1.y, stick2.y))/100)*0.3;
+  
+  offset2 += scr;
+  if(offset2 > 40) {
+    offset2 -= 40;
+    rockets.push({x: rnd(40, 60), y: -50, timer: rnd(2*PI)});
   }
 
-  spin = PI*ticks/30;
-
-  if(ticks%20 < 1) {
-    let pos = vec(rnd(10, 90), rnd(10, 90));
-    while(wheelPos.distanceTo(pos) < 30) pos = vec(rnd(10, 90), rnd(10, 90));
-    if(rnd(1+difficulty) < 1)
-      people.push({pos, timer: 0, vel: vec(rnd(-1, 1), rnd(-1, 1))});
-    else
-      bombs.push({pos, timer: 5});
+  offset1 += scr;
+  if(offset1 > 60) {
+    offset1 -= 60;
+    let choose = floor(abs(rnd(2)-0.001));
+    switch(choose) {
+      case 0:
+        walls.push({ x: rnd(30, 70), y: -20, });
+        break;
+      case 1:
+        let x = rnd(30, 70);
+        cones.push({ x, y: -20 });
+        coins.push({ x, y: -25 }); 
+        break;
+      default:
+        console.log(choose);
+    }
   }
-  color("black");
-  people.forEach((p) => {
-    char("a", p.pos);
-  });
-  bombs.forEach((p) => {
-    char("b", p.pos);
+
+  if(ticks%floor(13/scr) == 0) {
+    gems.push({ x: rnd(10, 90), y: -20});
+  }
+
+  color("red");
+  walls = walls.filter(w => {
+    line(0, w.y, w.x, w.y);
+    line(w.x+40, w.y, 100, w.y);
+    w.y += scr;
+    return w.y < 110;
   });
   
-  color("purple");
-  line(wheelPos, 
-    vec(wheelPos).addWithAngle(spin*Math.sign(cos(angle)), 3.5*cos(angle)));
-  line(wheelPos, 
-    vec(wheelPos).addWithAngle(2*PI/3+spin*Math.sign(cos(angle)), 3.5*cos(angle)));
-  line(wheelPos, 
-    vec(wheelPos).addWithAngle(4*PI/3+spin*Math.sign(cos(angle)), 3.5*cos(angle)));
-  color("black");
-  circlePerp(wheelPos, 7, abs(angle%PI - PI/2)/(PI/2));
-  if (input.isPressed) {
-    angle += 0.06 + 0.01*difficulty;
-  } else {
-    angle -= 0.06 + 0.01*difficulty;
-  }
-  angle = (angle + 2*PI) % (2*PI);
-  
-  wheelPos.addWithAngle(angle, 0.6 + 0.01*difficulty);
-  wheelPos.x = clamp(wheelPos.x, 0, 100);
-  wheelPos.y = clamp(wheelPos.y, 0, 100);
+  cones = cones.filter(c => {
+    line(c.x - 15, c.y-10, c.x, c.y+10);
+    line(c.x + 15, c.y-10, c.x, c.y+10);
+    c.y += scr;
+    return c.y < 110;
+  });
 
+  rockets = rockets.filter(r => {
+    if(ticks%5 == 0)
+      particle(r.x, r.y, 3, 1, 3*PI/2, PI/2);
+    r.x += sin(r.timer)*0.3;
+    r.timer += 0.02;
+    r.y += scr*3;
+    rect(r.x-2, r.y-2, 4, 4);
+    if(r.y < 0 && (ticks%10 < 5)){
+      char("a", r.x, 10);
+    }
+    return r.y < 110;
+  });
+  
   color("yellow");
-  rect(wheelPos.x-1.5, wheelPos.y + 5, 3, 3)
-  remove(people, (p) => {
-    color("transparent");
-    p.pos.add(p.vel);
-    p.pos.x = clamp(p.pos.x, 0, 100);
-    p.pos.y = clamp(p.pos.y, 0, 100);
-    p.timer += 0.02;
-    if(p.timer > 0.5){
-      p.vel = vec(rnd(-0.7, 0.7), rnd(-0.5, 0.7));
-      if(p.pos.y > 90){
-        p.vel.y = rnd(-0.7, 0);
-      }
-      p.timer = 0;
+  let ang = stick1.angleTo(stick2);
+  ang += -0.04*difficulty;
+  ang = (ang + 2*PI)%(2*PI);
+  stick2 = vec(stick1).addWithAngle(ang, stickLen);
+  stick1.y += scr;
+  if(input.isJustPressed) {
+    play("hit");
+    stick1 = [stick2, stick2 = stick1][0];
+  }
+  let col = line(stick1, stick2);
+  if(col.isColliding.rect.red ||
+    ((stick1.x < 0 || stick1.x > 100) && (stick2.x < 0 || stick2.x > 100)) ||
+    (stick1.y > 100 && stick2.y > 100)){
+    play("explosion");
+    end();
+  }
+
+  gems = gems.filter(g => {
+    let ang = (ticks%60)*2*PI/60;
+    color("blue");
+    let col1 = line(vec(g.x, g.y).addWithAngle(ang, 5),
+      vec(g.x, g.y).addWithAngle(ang, -5)).isColliding.rect;
+    let col2 = line(vec(g.x, g.y).addWithAngle(ang+PI/2, 5),
+      vec(g.x, g.y).addWithAngle(ang+PI/2, -5)).isColliding.rect;
+    g.y += scr;
+    let remove = col1.red || col2.red || col1.yellow || col2.yellow;
+    if(col1.yellow || col2.yellow) {
+      play("coin");
+      addScore(difficulty * 20 + 100-g.y, g);
+      color("yellow");
+      particle(g, 20, 2);
     }
-    if(rect(p.pos.x - 3, p.pos.y - 3, 6, 6).isColliding.rect.yellow){
+    if(col1.red || col2.red) {
       color("red");
-      particle(p.pos, 20);
-      addScore(70*difficulty, p.pos);
-      play("click");
-      return true;
+      particle(g, 20, 2);
     }
+    return g.y < 110 && !remove;
   });
-  remove(bombs, (p) => {
-    color("transparent");
-    p.pos.y += 0.2;
-    p.timer -= 0.02;
-    if(p.timer <= 0){
+  
+  color("yellow");
+  coins = coins.filter(c => {
+    c.y += scr;
+    if(rect(vec(-2.5, -2.5).add(c), vec(5, 5)).isColliding.rect.yellow) {
+      play("lucky");
       color("blue");
-      particle(p.pos, 20, 0.5);
-      play("hit");
-      return true;
+      particle(c, 10, 2);
+      color("yellow");
+      particle(c, 10, 2);
+      addScore(difficulty * 2500, c);
+      return false;
     }
-    if(rect(p.pos.x - 3, p.pos.y - 3, 6, 6).isColliding.rect.yellow) {
-      play("explosion");
-      end();
-    }
+    return c.y < 110;
   });
-  color("black");
-  rect(wheelPos.x-1.5, wheelPos.y + 5, 3, 3);
 }
-
-function circlePerp(pos, height, p){
-  p = clamp(p, 0.01, 1);
-  let spin = ticks/20
-  let ang = p*PI;
-  let radius = height/(sin(ang/2));
-  let dis = cos(ang/2)*radius;
-  arc(vec(pos).addWithAngle(0, dis), radius, 3,PI+ang/2,PI-ang/2);
-  arc(vec(pos).addWithAngle(0, -dis), radius, 3,ang/2,-ang/2);
-}
-
-
 addEventListener("load", onLoad);
 </script>
 
