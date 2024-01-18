@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>crisp-game-lib</title>
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height,
+    user-scalable=no, initial-scale=1, maximum-scale=1"
+    />
+    <script src="https://unpkg.com/sounds-some-sounds@3.0.0/build/index.js"></script>
+    <script src="https://unpkg.com/gif-capture-canvas@1.1.0/build/index.js"></script>
+    <script src="https://unpkg.com/pixi.js@5.3.0/dist/pixi.min.js"></script>
+    <script src="https://unpkg.com/pixi-filters@3.1.1/dist/pixi-filters.js"></script>
+    <script src="https://unpkg.com/crisp-game-lib@1.1.1/docs/bundle.js"></script>
+
+<script>
+title = "REGULAR SHAPER";
+
+description = `
+[PRESS] 
+TO SHAPE
+`;
+
+characters = [];
+
+options = {};
+
+let getReady = true;
+let going = false;
+let scoring = false;
+let scoringTimer = 0;
+let scores = [];
+let sideCnt = 3;
+let lines = [];
+let ang = PI;
+let cnt = 0;
+function update() {
+  if (!ticks) {
+    getReady = true;
+    scoring = false;
+    scoringTimer = 0;
+    going = false;
+    lines = [[vec(70, 70), vec(70, 70)]];
+    scores = [];
+    sideCnt = 3;
+    ang = PI;
+    cnt = 0;
+  }
+  if(input.isJustPressed && !scoring) {
+    if(getReady) {
+      getReady = false;
+      going = true;
+    } else if (lines.length >= sideCnt) {
+      going = false;
+      scoring = true;
+      scoringTimer = 0;
+    } else {
+      ang += 2*PI/sideCnt;
+      lines.push([vec(lines[lines.length-1][1]), vec(lines[lines.length-1][1])]);
+    }
+  }
+  color("black");
+  lines.forEach(l => {
+    line(l[0].x, l[0].y, l[1].x, l[1].y);
+  });
+  if(getReady) {
+    text("Draw a " + 
+      ["0gon?", "1gon?", "2gon?",
+        "\nregular triangle", "square",
+        "\nregular pentagon", "\nregular hexagon",
+        "\nregular heptagon", "\nregular octagon"][sideCnt] + "!",
+      5, 45);
+  }
+  if(scoring) {
+    if(scoringTimer == 0) {
+      lines.forEach(l => {
+        let side = vec(l[1].x - l[0].x, l[1].y - l[0].y);
+        let pos = vec(side).normalize().mul(side.length/2).add(
+          vec(side).rotate(-PI/2).normalize().mul(15)
+        ).add(l[0]).add(vec(-10, 0));
+        pos = pos.clamp(5, 75, 5, 75); 
+        console.log(pos);
+        scores.push({pos, score: ceil(side.length*100)/100});
+      });
+    } else if (scoringTimer <= 2.5) {
+      if(scoringTimer > 1)
+        scores.forEach((s,i) => {
+          s.pos.add(vec(40, 20+10*i).sub(s.pos).mul(0.1));
+        });
+    } else {
+      color("white");
+      rect(0, 0 , 100, 100);
+      color("black");
+      line(vec(30, 20+scores.length*10),
+        vec(clamp(scoringTimer-2.5)*40+30, 20+scores.length*10));
+      if(scoringTimer >= 3.5){
+
+        let avg = 0;
+        scores.forEach(s => avg += s.score);
+        let score = avg;
+        avg /= scores.length;
+        scores.forEach(s => score -= pow(abs(avg-s.score), 2));
+        score = ceil(score*100)/100;
+        text(score+"", 30, 30+scores.length*10);
+        if(abs(scoringTimer-3.5) < 0.02){
+          addScore(score, 30, 30+scores.length*10);
+        }
+      }
+      if(scoringTimer > 4.1){
+        let avg = 0;
+        scores.forEach(s => avg += s.score);
+        let score = avg;
+        avg /= scores.length;
+        scores.forEach(s => score -= pow(abs(avg-s.score), 2));
+        score = ceil(score*100)/100;
+        if(score <= 0)end();
+        scoring = false;
+        getReady = true;
+        lines = [[vec(70, 70), vec(70, 70)]];
+        scores = [];
+        sideCnt = floor(rnd(3, 8));
+        ang = PI;
+        cnt++;
+      }
+    }
+    scores.forEach(s => {
+      text(s.score+"", s.pos, {backgroundColor: "white"});
+    });
+    scoringTimer += 0.02;
+  }
+
+  if(going) {
+    let sped = 1.5+cnt/10;
+    lines[lines.length-1][1].addWithAngle(ang, sped);
+    let p = lines[lines.length-1][1];
+    if(p.x < 0 || p.x > 100 || p.y < 0 || p.y > 100){
+      end();
+    }
+  }
+}
+
+addEventListener("load", onLoad);
+</script>
+
+  </head>
+  <body style="background: #ddd"></body>
+</html>
