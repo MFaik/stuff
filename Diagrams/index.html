@@ -1,0 +1,68 @@
+ <!DOCTYPE html>
+<html>
+<head>
+<title>NON</title>
+<link rel="stylesheet" href="diagram.css">
+<style>
+  body {
+    background-color: rgb(20, 20, 20);
+    user-select: none;
+  }
+  .center {
+    display: flex;
+    justify-content: center;
+  }
+  #grid{
+    width: 80vmin;
+    height: 80vmin;
+    margin: 1vmin;
+    display: grid;
+
+    grid-template-columns: repeat(9,1fr);
+    gap:1px;
+  }
+  .tile{
+    aspect-ratio: 1;
+    background-color: rgb(0, 120, 120);
+  }
+  .empty {
+    background-color: white;
+  }
+  .wall {
+    background-color: indigo;
+  }
+  .monster {
+    background-color: red;
+  }
+  .chest {
+    background-color: yellow;
+  }
+  .transparent {
+    background-color: transparent;
+  }
+  .selected {
+    border: solid;
+  }
+  .char {
+    font-size: 5vmin;
+    text-align: center;
+    margin: 1vmin 0;
+  }
+  .wrong {
+    background-color: red;
+  }
+</style>
+</head>
+<body>
+  <div class="center">
+    <button onclick="editButton()" id="edit">edit</button>
+    <button onclick="shareButton()" id="share">share!</button>
+    <button onclick="solveButton()">solve</button>
+  </div>
+  <div class="center">
+    <div id="grid"></div>
+  </div>
+  <script type="text/javascript" src="solver.js"></script>
+  <script type="text/javascript" src="diagrams.js"></script>
+</body>
+</html> 

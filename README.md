@@ -5,6 +5,7 @@
 [BugOfLife](CellularAutomata/BugOfLife) <br>
 [LangtonAnt](CellularAutomata/LangtonAnt)<br>
 [PrimeSpiral](PrimeSpiral) <br>
+[Diagrams](Diagrams) <br>
 [Competiton](Competiton) <br>
 [Exile](Exile)<br>
 [SierpinskiTriangle](SierpinskiTriangle)<br>
