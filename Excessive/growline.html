@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>GROW LINE</title>
+    <meta
+      name="viewport"
+      content="width=device-width, height=device-height,
+    user-scalable=no, initial-scale=1, maximum-scale=1"
+    />
+    <script src="https://unpkg.com/sounds-some-sounds@3.0.0/build/index.js"></script>
+    <script src="https://unpkg.com/gif-capture-canvas@1.1.0/build/index.js"></script>
+    <script src="https://unpkg.com/pixi.js@5.3.0/dist/pixi.min.js"></script>
+    <script src="https://unpkg.com/pixi-filters@3.1.1/dist/pixi-filters.js"></script>
+    <script src="https://unpkg.com/crisp-game-lib@1.1.1/docs/bundle.js"></script>
+
+<script>
+title = "GROW LINE";
+
+description = `
+  HOLD to GO DOWN
+  RELEASE to GROW
+  RED is BAD
+`;
+
+characters = [];
+
+options = {
+  seed: 448,
+  theme: "dark",
+  isReplayEnabled: true,
+  isPlayingBgm: true,
+};
+
+let player;
+let playerVel = 1;
+
+let fruits = [];
+
+let bombs = [];
+let wind = -30, windVel = 1;
+let score = 3;
+
+function update() {
+  if (!ticks) {
+    //player = {
+    //  ang: 0,
+    //  pos: vec(50, 50),
+    //  growth: 0,
+    //};
+    player = vec(0, 200);
+    fruits = [];
+    bombs = [];
+    //wind = -10;
+    //windVel = 1;
+    score = 3;
+  }
+
+  /*
+  if(!(ticks % 100)) {
+    for(let i = -5;i < 10;i++) {
+      bombs.push({pos: vec(i*40, -10)});
+    }
+  }
+  
+  wind += windVel/60;
+  if(Math.abs(wind) > 30) {
+    windVel *= -1;
+    wind += windVel * 2;
+  }
+  color("red");
+  bombs = bombs.filter(bomb => {
+    if(bomb.pos.y > 120)
+      return false;
+    bomb.pos.add(wind/60, 20/60);
+    
+    let pos = bomb.pos;
+    line(vec(pos).addWithAngle(ticks*PI/60, 3), 
+         vec(pos).addWithAngle(ticks*PI/60 + PI/3, 3));
+    line(vec(pos).addWithAngle(ticks*PI/60 + PI/3, 3), 
+         vec(pos).addWithAngle(ticks*PI/60 + 2*PI/3, 3));
+    line(vec(pos).addWithAngle(ticks*PI/60 + 2*PI/3, 3), 
+         vec(pos).addWithAngle(ticks*PI/60, 3));
+    return true;
+  })
+  
+
+  //player
+  color("black");
+  let col1 = rect(vec(player.pos).sub(3, 3), 6, 6);
+  let col2 = line(player.pos, vec(player.pos).addWithAngle(player.ang, player.growth+5));
+
+  if(input.isJustReleased) {
+    player.pos.addWithAngle(player.ang, player.growth+5);
+    player.ang += PI;
+  } else if(input.isPressed) {
+    player.growth += 1; // add some diffic
+  } else if(player.growth > 0) {
+    player.growth = player.growth - 2;
+  } else {
+    player.ang += PI/60; //add some difficutly shit
+    player.growth = 0;
+  }
+
+  if(player.pos.x < 0 || player.pos.x > 100 || player.pos.y < 0 || player.pos.y > 100 ||
+     col1.isColliding.rect.red || col2.isColliding.rect.red) {
+    //play("explosion");
+    end();
+  }
+  */
+  color("red");
+  line(0, 80, 100, 80);
+  if(player.x < 1) {
+    if(input.isPressed) {
+      player.add(0, playerVel*80/60);
+      console.log("going-around");
+    } else if(input.isJustReleased) {
+      player.add(300/60, 0);
+      console.log("start-growing");
+    }
+    if(player.y > 75) {
+      playerVel = -1;
+    } else if(player.y < 0) {
+      playerVel = 1;
+    }
+  } else {
+    if(player.x < 100) {
+      player.add(300/60, 0);
+      console.log("growing...");
+    } else {
+      score = 3;
+      playerVel = 1;
+      player = vec(0, 0);
+      console.log("line-end");
+    }
+  }
+  color("black");
+  line(vec(0, player.y), player);
+
+  //fruit logic
+  fruits = fruits.filter((fruit) => {
+    if(fruit.vel.y > 0 && fruit.pos.y > 100)
+      return false;
+
+    color(fruit.col);
+    let col = rect(fruit.pos, fruit.size);
+    if(col.isColliding.rect.black){
+      addScore(score, fruit.pos);
+      score *= 3;
+      play("hit");
+      return false;
+    }
+
+    fruit.pos.add(vec(fruit.vel).div(60));
+    fruit.vel.add(0, 17/60);
+    return true;
+  });
+  bombs = bombs.filter((fruit) => {
+    if(fruit.vel.y > 0 && fruit.pos.y > 100)
+      return false;
+
+    color("red");
+    let col = line(vec(fruit.pos).addWithAngle((ticks%120/60)*PI, 3),
+      vec(fruit.pos).addWithAngle((ticks%120/60)*PI, -3));
+    if(col.isColliding.rect.black && player.x > 2){
+      play("explosion");
+      end();
+    }
+
+    fruit.pos.add(vec(fruit.vel).div(60));
+    fruit.vel.add(0, 17/60);
+    return true;
+  });
+
+  //fruit wave logic
+  if (!(ticks % 150)) {
+    for(let i = 0;i < rndi(10, 15);i++){
+      let x = rndi(100);
+      let min = Math.min;
+      let speed = x < 50 ? rndi(min(50-x, 15)) : -rndi(min(x-50, 15));
+      if(rndi(4) < 3)
+        fruits.push({
+          pos: vec(x, rndi(110, 160)),
+          vel: vec(speed, rndi(-67, -42)),
+          size: vec(rndi(6, 10), rndi(6, 8)),
+          col: ["blue", "yellow", "green"][rndi(3)],
+        });
+      else
+        bombs.push({
+          pos: vec(x, rndi(110, 160)),
+          vel: vec(speed, rndi(-67, -42)),
+        });
+    }
+  }
+
+
+
+}
+
+addEventListener("load", onLoad);
+</script>
+
+  </head>
+  <body style="background: #ddd"></body>
+</html>
