@@ -154,8 +154,11 @@ if(!horizontal) {
 
 let finished = false;
 let endGame = () => {
-    if(!edit)
+    if(!edit){
         finished = true;
+        console.log("print");
+        solveButton();
+    }
 }
 let canEdit = (i) => {
     if(edit) {
@@ -191,7 +194,7 @@ let setTile = (x, y, t) => {
         checkNumbers(x, y, t);
         grid[i] = t;
         if(check(grid, vertical, horizontal, currentVertical, currentHorizontal)) {
-            finished = true;
+            endGame();
         } else {
             finished = false;
         }
@@ -271,8 +274,33 @@ function playButton() {
 }
 function solveButton() {
     let answer = solve(grid, vertical, horizontal);
+    let lastEdit = edit;
+    edit = true;
     for(let i = 0;i < 64;i++) {
         if(answer[i] == WALL || answer[i] == EMPTY)
             setTile(i%8, Math.floor(i/8), answer[i]);
     }
+    edit = lastEdit;
+}
+function generateButton() {
+    let g = generate();
+    console.table(g.slice().reduce((r,e,i)=>(i%8?r[r.length-1].push(e):r.push([e]))&&r,[]));
+    for(let i = 0;i < 64;i++) {
+        grid[i] = g[i];
+    }
+    for(let i = 0;i < 8;i++) { 
+        let vertcnt = 0;
+        let horzcnt = 0;
+        for(let j = 0;j < 8;j++) {
+            if(g[i + j*8] == WALL) {
+                vertcnt++;
+            }
+            if(g[j + i*8] == WALL) {
+                horzcnt++;
+            }
+        }
+        vertical[i] = vertcnt++;
+        horizontal[i] = horzcnt++;
+    }
+    location.href = getUrl();
 }
