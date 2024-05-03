@@ -145,11 +145,17 @@ for(let i = 0;i < 8*8;i++) {
 }
 let currentVertical = [0,0,0,0,0,0,0,0];
 let currentHorizontal = [0,0,0,0,0,0,0,0];
+let nullCnt = 0;
 if(!vertical) {
     vertical = [0,0,0,0,0,0,0,0];
+    nullCnt++;
 }
 if(!horizontal) {
     horizontal = [0,0,0,0,0,0,0,0];
+    nullCnt++;
+}
+if(nullCnt == 2) {
+    generateButton();
 }
 
 let finished = false;
