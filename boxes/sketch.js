@@ -13,30 +13,13 @@ let increase_tick = () => tick++;
 //> are you saving the world with the time you saved not typing "o"?
 //but unfortunately, this change was made to avoid naming conflict with p5.box()
 /** @typedef {{ x: number, y: number, parent: bx, children: bx[], last_movement_tick: number}} bx */
-/** @typedef {{ x: number, y: number, scale: number, selected_box: bx}} camera */
-
-/** 
- * @param {bx} parent
- * @param {number} x
- * @param {number} y
- * @returns {bx|undefined}
- */
-let create_box = (x, y, parent) => {
-    let b = {x, y, parent, children: [], last_movement_tick: get_current_tick()};
-    if(parent){
-        if(get_box(x, y, parent))
-            return;
-        parent.children.push(b);
-    }
-    return b;
-}
 /** 
  * @param {bx} parent
  * @param {number} x
  * @param {number} y
  * @returns {bx}
  */
-let create_box_unsafe = (x, y, parent) => {
+let create_box = (x, y, parent) => {
     let b = {x, y, parent, children: [], last_movement_tick: get_current_tick()};
     parent.children.push(b);
     return b;
@@ -53,6 +36,7 @@ let get_box = (x, y, parent) => {
     }
 }
 
+/** @typedef {{ x: number, y: number, scale: number, selected_box: bx}} camera */
 /** @type {camera[]} */
 let camera_stack = [];
 /** @param {bx} selected_box */
@@ -74,12 +58,6 @@ let get_current_box = () =>
  */
 let push_box_current = (x, y) => 
     create_box(x, y, get_current_camera().selected_box);
-/** 
- * @param {number} x
- * @param {number} y
- */
-let push_box_current_unsafe = (x, y) => 
-    create_box_unsafe(x, y, get_current_camera().selected_box);
 /**
  * @param {number} x
  * @param {number} y
@@ -88,17 +66,20 @@ let get_box_current = (x, y) =>
     get_box(x, y, get_current_camera().selected_box)
 
 /** @param {bx} box */
-let remove_box_internal = (box) => {
+let wipe_box = (box) => {
     //using delete is fine, as this is done to satisfy gc
     /** @ts-ignore */
     delete box.parent;
     for(let c of box.children) {
-        remove_box_internal(c)
+        wipe_box(c)
     }
-    box.children = [];
+    box.children.length = 0;
 }
-/** @param {bx} box */
-let remove_box = (box) => {
+/** 
+ * @param {bx} box
+ * @param {boolean} [undoable]
+ */
+let remove_box = (box, undoable = false) => {
     let p = box.parent;
     let i = p.children.indexOf(box);
     if(i != -1) {
@@ -107,7 +88,8 @@ let remove_box = (box) => {
     } else {
         throw new Error("Trying to remove a box that does not exists!");
     }
-    remove_box_internal(box);
+    if(!undoable)
+        wipe_box(box);
 }
 /** 
  * @param {bx} box 
@@ -205,7 +187,7 @@ let expand_box = (base_box, applied_box) => {
         c.x += offset.x;
         c.y += offset.y;
     }
-    applied_box.children = []
+    applied_box.children.length = 0;
     remove_box(applied_box);
     remove_box(base_box);
 
@@ -243,7 +225,7 @@ let compact_box = (base_box, applied_box) => {
     let offset_y = (base_box.y-applied_box.y)/2;
     let area_offset = calculate_area_offset(base_box.x, base_box.y, 
                                             offset_x, offset_y, width, height);
-    let new_box = create_box_unsafe(Infinity, Infinity, base_box.parent);
+    let new_box = create_box(Infinity, Infinity, base_box.parent);
     for(let c of applied_box.children) {
         let b = get_box(c.x + area_offset.x, c.y + area_offset.y, base_box.parent);
         if(b) {
@@ -253,7 +235,7 @@ let compact_box = (base_box, applied_box) => {
         }
     }
 
-    applied_box.children = []
+    applied_box.children.length = 0;
     remove_box(applied_box);
     remove_box(base_box);
 
@@ -298,16 +280,70 @@ let apply_box = (base_box, applied_box) => {
     remove_box(applied_box);
 }
 
-/** @type {camera[][]} */
-let game_states = []
+const UndoTypes = {
+    CAMERA_PUSH: 1,
+    CAMERA_POP: 2,
+    BOX_ADD: 3,
+    BOX_REMOVE: 4,
+}
+
+//undo type is any because otherwise it adds way too much boilerplate
+/**
+ * @type {any[]}
+ */
+let undo_stack = [];
+
+let push_undo_camera_pop = () => {
+    undo_stack.push({type: UndoTypes.CAMERA_POP});
+}
+/** @param {bx} box */
+let push_undo_camera_push = (box) => {
+    undo_stack.push({type: UndoTypes.CAMERA_PUSH, box});
+}
+/** 
+ * @param {bx} box
+ */
+let push_undo_box_remove = (box) => {
+    undo_stack.push({type: UndoTypes.BOX_REMOVE, box});
+}
+/** 
+ * @param {bx} box
+ * @param {bx} parent
+ */
+let push_undo_box_add = (box, parent) => {
+    undo_stack.push({type: UndoTypes.BOX_ADD, box, parent});
+}
+let undo = () => {
+    let undo_obj = undo_stack.pop();
+    if(!undo_obj) {
+        load_game()
+        return;
+    }
+    if(undo_obj.type == UndoTypes.CAMERA_PUSH) {
+        push_camera(undo_obj.box);
+    } else if(undo_obj.type == UndoTypes.CAMERA_POP) {
+        camera_stack.pop();
+    } else if(undo_obj.type == UndoTypes.BOX_REMOVE) {
+        remove_box(undo_obj.box);
+    } else if(undo_obj.type == UndoTypes.BOX_ADD) {
+        undo_obj.parent.children.push(undo_obj.box);
+    }
+}
+
+/** 
+ * @type {{camera: camera[], undo_stack: any[]}[]}
+ */
+let game_states = [];
 let save_game = () => {
-    game_states.push(structuredClone(camera_stack));
+    game_states.push(structuredClone({camera: camera_stack, undo_stack}));
+    undo_stack = [];
 }
 let load_game = () => {
     let save = game_states.pop();
     if(save) {
-        //TODO: memory leak
-        camera_stack = save;
+        wipe_box(get_main_box());
+        camera_stack = save.camera;
+        undo_stack = save.undo_stack;
     }
 }
 
@@ -327,13 +363,13 @@ window.setup = function() {
         children: []
     };
     push_camera(main_box);
-    save_game();
 }
 
 let logic_timer = 0;
 /** @ts-ignore */
 window.draw = function() {
     background(30+camera_stack.length*10, 10, 10);
+
     for(let i = 0;i < camera_stack.length-1;i++) {
         rect(5+i*20, 5, 15);
     }
@@ -360,10 +396,8 @@ let game_logic = () => {
     for(let c of get_main_box().children)
         box_queue.push(c)
     let head = 0;
-    console.log(get_current_tick());
     while(box_queue.length-head) {
         let b = box_queue[head++];
-        console.log(b);
         box_check(b)
         for(let c of b.children)
             box_queue.push(c)
@@ -451,17 +485,18 @@ window.mousePressed = function() {
 
     if(mouseButton.left){
         let b = get_box_current(x, y);
-        save_game();
         if(b) {
             push_camera(b)
+            push_undo_camera_pop();
         } else {
-            push_box_current_unsafe(x, y)
+            let b = push_box_current(x, y)
+            push_undo_box_remove(b);
         }
     } else if(mouseButton.right) {
         let b = get_box_current(x, y);
         if(b) {
-            save_game();
-            remove_box(b)
+            push_undo_box_add(b, b.parent);
+            remove_box(b, true)
         }
     }
 }
@@ -469,7 +504,7 @@ window.mousePressed = function() {
 window.keyPressed = function() {
     if(keyCode == ESCAPE || key == 'e') {
         if(camera_stack.length > 1) {
-            save_game();
+            push_undo_camera_push(get_current_box());
             camera_stack.pop();
         }
     } else if(key == 's') {
@@ -478,7 +513,7 @@ window.keyPressed = function() {
     } else if(key == 'n') {
         normalize_box(get_current_box());
     } else if(key == 'z') {
-        load_game();
+        undo();
     }
 }
 
