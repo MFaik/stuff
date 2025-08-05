@@ -1,5 +1,6 @@
 # stuff
 
+[boxes](boxes) <br>
 [SmallGames](Excessive) <br>
 [GameOfLife](CellularAutomata/GameOfLife) <br>
 [BugOfLife](CellularAutomata/BugOfLife) <br>
