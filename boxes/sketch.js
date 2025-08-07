@@ -365,6 +365,8 @@ window.setup = function() {
     push_camera(main_box);
 }
 
+/** @type {Record<string | number, boolean>} */
+let pressed_keys = {};
 let logic_timer = 0;
 /** @ts-ignore */
 window.draw = function() {
@@ -381,6 +383,12 @@ window.draw = function() {
     }
 
     let c = get_current_camera();
+
+    if(pressed_keys[RIGHT_ARROW]) c.x -= c.scale*deltaTime;
+    if(pressed_keys[LEFT_ARROW]) c.x += c.scale*deltaTime;
+    if(pressed_keys[DOWN_ARROW]) c.y -= c.scale*deltaTime;
+    if(pressed_keys[UP_ARROW]) c.y += c.scale*deltaTime;
+
     translate(c.x, c.y)
     scale(c.scale)
 
@@ -501,21 +509,40 @@ window.mousePressed = function() {
     }
 }
 
-window.keyPressed = function() {
-    if(keyCode == ESCAPE || key == 'e') {
+window.mouseWheel = function(event) {
+    /** @ts-ignore */
+    let d = event.delta;
+    let c = get_current_camera();
+    c.scale += d * -0.001;
+    c.scale = constrain(c.scale, 0.5, 2);
+    return false;
+}
+
+window.addEventListener('keydown', (e) => {
+    pressed_keys[e.key] = true;
+
+    if(e.key == 'Escape' || e.key == 'e') {
         if(camera_stack.length > 1) {
             push_undo_camera_push(get_current_box());
             camera_stack.pop();
         }
-    } else if(key == 's') {
+    } else if(e.key == 's') {
         save_game();
         game_logic();
-    } else if(key == 'n') {
+    } else if(e.key == 'n') {
         normalize_box(get_current_box());
-    } else if(key == 'z') {
+    } else if(e.key == 'z') {
         undo();
     }
-}
+});
+
+window.addEventListener('keyup', (e) => {
+  pressed_keys[e.key] = false;
+});
+
+window.addEventListener('blur', () => {
+  pressed_keys = {};
+});
 
 window.windowResized = function() {
     resizeCanvas(windowWidth, windowHeight);
