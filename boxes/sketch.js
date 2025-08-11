@@ -250,10 +250,6 @@ let compact_box = (base_box, applied_box, parent) => {
         }
     }
 
-    applied_box.children.length = 0;
-    remove_box(applied_box, parent);
-    remove_box(base_box, parent);
-
     let new_pos_x = base_box.x+offset_x;
     let new_pos_y = base_box.y+offset_y;
     let block = get_box(new_pos_x, new_pos_y, parent);
@@ -265,6 +261,11 @@ let compact_box = (base_box, applied_box, parent) => {
         new_box.x = new_pos_x;
         new_box.y = new_pos_y;
     }
+
+    applied_box.children.length = 0;
+    remove_box(applied_box, parent);
+    remove_box(base_box, parent);
+
     return true;
 }
 
@@ -376,8 +377,7 @@ window.draw = function() {
     background(30+get_camera_depth()*10, 10, 10);
 
     for(let i = 0;i < get_camera_depth()-1;i++) {
-        draw_box_at_place(i+1, 1, 20, 2, get_box_at_depth(i));
-        //rect(5+i*20, 5, 15);
+        draw_box_at_place(5+i*30, 5, 30, 2, get_box_at_depth(i));
     }
     logic_timer += deltaTime;
     while(logic_timer > logic_interval) {
@@ -491,8 +491,8 @@ let move_box = (x_offset, y_offset, box, parent) => {
  * @param {bx} box
  */
 let draw_box_at_place = (x, y, default_size, default_offset, box) => {
-    rect(x*default_size+default_offset, 
-         y*default_size+default_offset, default_size-default_offset*2);
+    rect(x+default_offset, 
+         y+default_offset, default_size-default_offset*2);
     if(box.children.length == 0)return;
     let l = box.children[0].x, u = box.children[0].y;
     let r = l, d = u;
@@ -512,8 +512,8 @@ let draw_box_at_place = (x, y, default_size, default_offset, box) => {
     }
     fill(30, 90, 200);
     for(let c of box.children) {
-        rect((c.x-l)*box_default_size+(x*default_size)+default_offset*2, 
-             (c.y-u)*box_default_size+(y*default_size)+default_offset*2, 
+        rect((c.x-l)*box_default_size+x+default_offset*2, 
+             (c.y-u)*box_default_size+y+default_offset*2, 
              max(2, ceil(box_default_size)));
     }
     fill(255);
@@ -521,7 +521,8 @@ let draw_box_at_place = (x, y, default_size, default_offset, box) => {
 
 /** @param {bx} box */
 let draw_box = (box) => {
-    draw_box_at_place(box.x, box.y, default_tile_size, 2, box);
+    draw_box_at_place(box.x*default_tile_size, box.y*default_tile_size, 
+                      default_tile_size, 2, box);
 }
 
 window.mousePressed = function() {
