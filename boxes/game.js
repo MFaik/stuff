@@ -18,6 +18,7 @@ let create_game = () => {
         x: 0, y: 0, 
         children: [],
         last_movement_tick: -1,
+        name: "",
     };
     const camera = create_camera(width/2, height/2, main_box);
 
@@ -133,9 +134,10 @@ let create_game = () => {
     let get_current_camera = camera.get_current;
     let get_camera_depth = camera.get_depth;
     let get_box_at_depth = camera.get_box_at_depth;
+    let get_current_box = camera.get_current_box;
 
     return { undo, left_click, right_click, 
-             get_current_camera, get_camera_depth, pop_camera, get_box_at_depth,
+             get_current_camera, get_camera_depth, pop_camera, get_current_box, get_box_at_depth,
              step_game, };
 }
 

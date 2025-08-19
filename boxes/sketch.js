@@ -3,18 +3,28 @@
 /// <reference path="lib/extra.d.ts" />
 
 /** @typedef {import('./types.js').bx} bx */
+/** @typedef {import('./types.js').camera} camera*/
 
 import { create_game } from "./game.js"
 
-const default_tile_size = 40;
+const tile_size = 40;
 /** @type {ReturnType<typeof create_game>} */
 let game;
+/** @type {ReturnType<typeof createInput>} */
+let input;
 
 /** @ts-ignore */
 window.setup = function() {
     game = create_game();
     createCanvas(windowWidth, windowHeight);
     noStroke();
+
+    input = createInput();
+    reset_input_state();
+    reset_input_size();
+    input.input(() => {
+        game.get_current_box().name = input.value();
+    })
 }
 
 /** @ts-ignore */
@@ -35,9 +45,44 @@ window.draw = function() {
     translate(c.x, c.y)
     scale(c.scale)
 
+    let mouse_over_box = undefined;
     for(let box of c.selected_box.children) {
-        draw_box(box)
+        if(is_inside_camera_boundry(c, box)) {
+            draw_box(box)
+            if(box.name !== "" && is_mouse_over(c, box))
+                mouse_over_box = box;
+        }
     }
+    if(mouse_over_box) {
+        draw_box_text(mouse_over_box);
+    }
+}
+
+/** 
+ * @param {camera} camera
+ * @param {bx} box
+ * @returns {boolean}
+ */
+let is_inside_camera_boundry = (camera, box) => {
+    let current_tile_size = tile_size*camera.scale;
+    let x = box.x*current_tile_size+camera.x;
+    let y = box.y*current_tile_size+camera.y;
+    console.log(x + " " + mouseX);
+    return x <= width && y <= height &&
+           x+current_tile_size >= 0 && y+current_tile_size >= 0;
+}
+
+/** 
+ * @param {camera} camera
+ * @param {bx} box
+ * @returns {boolean}
+ */
+let is_mouse_over = (camera, box) => {
+    let current_tile_size = tile_size*camera.scale;
+    let x = box.x*current_tile_size+camera.x;
+    let y = box.y*current_tile_size+camera.y;
+    return mouseX <= x+current_tile_size && mouseY <= y+current_tile_size &&
+           mouseX >= x && mouseY >= y;
 }
 
 /** 
@@ -78,17 +123,43 @@ let draw_box_at_place = (x, y, default_size, default_offset, box) => {
 
 /** @param {bx} box */
 let draw_box = (box) => {
-    draw_box_at_place(box.x*default_tile_size, box.y*default_tile_size, 
-                      default_tile_size, 2, box);
+    draw_box_at_place(box.x*tile_size, box.y*tile_size, 
+                      tile_size, 2, box);
 }
 
-window.mousePressed = function() {
+/** @param {bx} box */
+let draw_box_text = (box) => {
+    fill(255);
+    text(box.name, box.x*tile_size+tile_size/2-textWidth(box.name)/2, 
+         box.y*tile_size-textAscent()-textDescent());
+}
+
+let reset_input_state = () => {
+    if(game.get_camera_depth() <= 1)
+        input.hide();
+    else 
+        input.show();
+    input.value(game.get_current_box().name);
+}
+
+let reset_input_size = () => {
+    input.position(width/3, 40);
+    input.size(width/3);
+}
+
+window.mousePressed = function(event) {
+    /** @ts-ignore */
+    if(event.target.tagName == "INPUT")return;
+    if(input.elt == document.activeElement) {
+        input.elt.blur();
+        return;
+    }
     let current_camera = game.get_current_camera();
     let x = mouseX - current_camera.x;
-    x /= current_camera.scale*default_tile_size;
+    x /= current_camera.scale*tile_size;
     x = floor(x);
     let y = mouseY - current_camera.y;
-    y /= current_camera.scale*default_tile_size;
+    y /= current_camera.scale*tile_size;
     y = floor(y);
 
     if(mouseButton.left){
@@ -96,6 +167,7 @@ window.mousePressed = function() {
     } else if(mouseButton.right) {
         game.right_click(x, y);
     }
+    reset_input_state();
 }
 
 window.mouseWheel = function(event) {
@@ -108,6 +180,11 @@ window.mouseWheel = function(event) {
 }
 
 window.addEventListener('keydown', (e) => {
+    if(input.elt == document.activeElement) {
+        if(e.key == 'Escape' || e.key == 'Enter')
+            input.elt.blur();
+        return;
+    }
     if(e.key == 'Escape' || e.key == 'e') {
         game.pop_camera();
     } else if(e.key == 's') {
@@ -115,8 +192,10 @@ window.addEventListener('keydown', (e) => {
     } else if(e.key == 'z') {
         game.undo();
     }
+    reset_input_state();
 });
 
 window.windowResized = function() {
     resizeCanvas(windowWidth, windowHeight);
+    input.reset_input_size();
 }

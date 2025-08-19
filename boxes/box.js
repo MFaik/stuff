@@ -4,15 +4,15 @@ let tick = 0;
 let get_current_tick = () => tick;
 let increase_tick = () => tick++;
 
-
 /** 
  * @param {bx} parent
  * @param {number} x
  * @param {number} y
+ * @param {string} name
  * @returns {bx}
  */
-let create_box = (x, y, parent) => {
-    let b = {x, y, parent, children: [], last_movement_tick: get_current_tick()};
+let create_box = (x, y, parent, name = "") => {
+    let b = {x, y, parent, name, children: [], last_movement_tick: get_current_tick()};
     parent.children.push(b);
     return b;
 }
