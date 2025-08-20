@@ -49,7 +49,7 @@ window.draw = function() {
     for(let box of c.selected_box.children) {
         if(is_inside_camera_boundry(c, box)) {
             draw_box(box)
-            if(box.name !== "" && is_mouse_over(c, box))
+            if(box.name && is_mouse_over(c, box))
                 mouse_over_box = box;
         }
     }
@@ -67,7 +67,6 @@ let is_inside_camera_boundry = (camera, box) => {
     let current_tile_size = tile_size*camera.scale;
     let x = box.x*current_tile_size+camera.x;
     let y = box.y*current_tile_size+camera.y;
-    console.log(x + " " + mouseX);
     return x <= width && y <= height &&
            x+current_tile_size >= 0 && y+current_tile_size >= 0;
 }
@@ -130,6 +129,8 @@ let draw_box = (box) => {
 /** @param {bx} box */
 let draw_box_text = (box) => {
     fill(255);
+    //we check if the box has name earlier so here it must have a name
+    /** @ts-ignore *///TODO remove this ts-ignore somehow?
     text(box.name, box.x*tile_size+tile_size/2-textWidth(box.name)/2, 
          box.y*tile_size-textAscent()-textDescent());
 }
@@ -139,7 +140,7 @@ let reset_input_state = () => {
         input.hide();
     else 
         input.show();
-    input.value(game.get_current_box().name);
+    input.value(game.get_current_box().name||"");
 }
 
 let reset_input_size = () => {
@@ -197,5 +198,5 @@ window.addEventListener('keydown', (e) => {
 
 window.windowResized = function() {
     resizeCanvas(windowWidth, windowHeight);
-    input.reset_input_size();
+    reset_input_size();
 }

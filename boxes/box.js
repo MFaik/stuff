@@ -8,10 +8,10 @@ let increase_tick = () => tick++;
  * @param {bx} parent
  * @param {number} x
  * @param {number} y
- * @param {string} name
+ * @param {undefined|string} name
  * @returns {bx}
  */
-let create_box = (x, y, parent, name = "") => {
+let create_box = (x, y, parent, name = undefined) => {
     let b = {x, y, parent, name, children: [], last_movement_tick: get_current_tick()};
     parent.children.push(b);
     return b;

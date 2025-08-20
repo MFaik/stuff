@@ -7,7 +7,7 @@ export type bx = {
   y: number;
   children: bx[];
   last_movement_tick: number;
-  name: string;
+  name: undefined|string;
 }
 
 export type camera = {
