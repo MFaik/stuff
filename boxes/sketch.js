@@ -6,31 +6,83 @@
 /** @typedef {import('./types.js').camera} camera*/
 
 import { create_game } from "./game.js"
+import { create_recorder, is_game_recorder } from "./recorder.js"
+import { create_replayer } from "./replayer.js";
 
 const tile_size = 40;
-/** @type {ReturnType<typeof create_game>} */
+/** @type {ReturnType<typeof create_game>|ReturnType<typeof create_recorder>} */
 let game;
+/** @type {ReturnType<typeof create_replayer>} */
+let replayer;
 /** @type {ReturnType<typeof createInput>} */
 let input;
 
+let is_replaying = false;
+
+const params = new URLSearchParams(window.location.search);
 /** @ts-ignore */
 window.setup = function() {
     game = create_game();
-    createCanvas(windowWidth, windowHeight);
+    if(params.has('record')) {
+        console.log("recording is enabled");
+        game = create_recorder(game);
+    }
+
+    let cnv = createCanvas(windowWidth, windowHeight);
+    cnv.drop(handleFile);
     noStroke();
 
     input = createInput();
     reset_input_state();
     reset_input_size();
     input.input(() => {
-        game.get_current_box().name = input.value();
+        game.set_current_box_name(input.value());
     })
+}
+
+//TODO fix type bugs
+let handleFile = (file) => {
+    if (file.type === "application" && file.subtype === "json") {
+        let json = file.data;
+        if("end_state" in json) {
+            replayer = create_replayer(json);
+            is_replaying = true;
+        }
+    }
+}
+
+let stop_replaying = () => {
+    is_replaying = false;
+    game = replayer.game;
+    if(params.has('record')) {
+        game = create_recorder(game);
+    }
 }
 
 /** @ts-ignore */
 window.draw = function() {
+    if(!is_replaying) {
+        draw_game(game);
+    } else {
+        push();
+        draw_game(replayer.game);
+        pop();
+        fill(0, 0, 255);
+        triangle(40, 60, 10, 40, 10, 80);
+        fill(255);
+    }
+}
+
+/** @param {game} game */
+let draw_game = (game) => {
     background(30+game.get_camera_depth()*10, 10, 10);
 
+    if(is_game_recorder(game) && game.is_recording) {
+        fill(255, 0, 0);
+        rect(10, 40, 30);
+        fill(255);
+    }
+    
     for(let i = 0;i < game.get_camera_depth()-1;i++) {
         draw_box_at_place(5+i*30, 5, 30, 2, game.get_box_at_depth(i));
     }
@@ -140,7 +192,7 @@ let reset_input_state = () => {
         input.hide();
     else 
         input.show();
-    input.value(game.get_current_box().name||"");
+    input.value(game.get_current_box_name()||"");
 }
 
 let reset_input_size = () => {
@@ -149,6 +201,7 @@ let reset_input_size = () => {
 }
 
 window.mousePressed = function(event) {
+    if(is_replaying) return;
     /** @ts-ignore */
     if(event.target.tagName == "INPUT")return;
     if(input.elt == document.activeElement) {
@@ -163,15 +216,17 @@ window.mousePressed = function(event) {
     y /= current_camera.scale*tile_size;
     y = floor(y);
 
-    if(mouseButton.left){
+    //TODO fix type bugs
+    if(event.button == 0){
         game.left_click(x, y);
-    } else if(mouseButton.right) {
+    } else if(event.button == 2) {
         game.right_click(x, y);
     }
     reset_input_state();
 }
 
 window.mouseWheel = function(event) {
+    if(is_replaying) return;
     /** @ts-ignore */
     let d = event.delta;
     let c = game.get_current_camera();
@@ -181,6 +236,21 @@ window.mouseWheel = function(event) {
 }
 
 window.addEventListener('keydown', (e) => {
+    if(is_replaying) {
+        if(e.key == 's') {
+            if(!replayer.step()) {
+                if(!replayer.is_accurate()) {
+                    console.error("The simulation doesn't match!");
+                } else {
+                    console.log("The simulation matches!!!");
+                    stop_replaying();
+                }
+            }
+        } else if(e.key == 'Escape' || e.key == 'e') {
+            stop_replaying();
+        }
+        return;
+    }
     if(input.elt == document.activeElement) {
         if(e.key == 'Escape' || e.key == 'Enter')
             input.elt.blur();
@@ -192,6 +262,15 @@ window.addEventListener('keydown', (e) => {
         game.step_game();
     } else if(e.key == 'z') {
         game.undo();
+    } else if(e.key == 'r') {
+        if(is_game_recorder(game)) {
+            if(!game.is_recording)
+                game.start_recording();
+            else {
+                let game_record = game.end_recording();
+                save_object(game_record, "record.json");
+            }
+        }
     }
     reset_input_state();
 });
@@ -199,4 +278,23 @@ window.addEventListener('keydown', (e) => {
 window.windowResized = function() {
     resizeCanvas(windowWidth, windowHeight);
     reset_input_size();
+}
+
+window.addEventListener('beforeunload', (event) => {
+    event.preventDefault(); 
+});
+
+//this code was copied line for line, don't know what it does
+/** @param {Object} obj */
+let save_object = (obj, filename = "data.json") => {
+  const json = JSON.stringify(obj);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+
+  URL.revokeObjectURL(url);
 }

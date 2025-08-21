@@ -12,7 +12,7 @@ let increase_tick = () => tick++;
  * @returns {bx}
  */
 let create_box = (x, y, parent, name = undefined) => {
-    let b = {x, y, parent, name, children: [], last_movement_tick: get_current_tick()};
+    let b = {x, y, name, children: [], last_movement_tick: get_current_tick()};
     parent.children.push(b);
     return b;
 }
@@ -47,7 +47,6 @@ let remove_box = (box, parent, undoable = false) => {
         parent.children[i] = parent.children[parent.children.length-1];
         parent.children.pop();
     } else {
-        //TODO: somehow this error is thrown on the undo
         throw new Error("Trying to remove a box that does not exists!");
     }
     if(!undoable)
@@ -148,6 +147,7 @@ let expand_box = (base_box, applied_box, parent) => {
     for(let c of applied_box.children) {
         c.x += offset.x;
         c.y += offset.y;
+        c.last_movement_tick = get_current_tick();
         let b = get_child(c.x, c.y, parent);
         parent.children.push(c);
         if(b) {
@@ -201,6 +201,7 @@ let compact_box = (base_box, applied_box, parent) => {
         if(b) {
             b.x -= area_offset.x;
             b.y -= area_offset.y;
+            b.last_movement_tick = get_current_tick();
             change_parent(b, parent, new_box);
         }
     }
@@ -311,18 +312,40 @@ let tick_box = (box) => {
     increase_tick();
 
     /** @type {[bx, bx][]} */
-    let box_queue = []
+    let box_stack = []
     for(let c of box.children)
-        box_queue.push([c, box]); //[0] -> box, [1] -> box's parent
-    let head = 0;
-    while(box_queue.length-head) {
-        let b = box_queue[head++];
+        box_stack.push([c, box]); //[0] -> box, [1] -> box's parent
+    while(box_stack.length) {
+        //TODO: fix type bugs
+        let b = box_stack.pop();
         if(b[0].last_movement_tick != get_current_tick())
             box_check(b[0], b[1]);
         for(let c of b[0].children)
-            box_queue.push([c, b[0]]);
+            box_stack.push([c, b[0]]);
     }
 
 }
 
-export { wipe_box, remove_box, create_box, get_child, tick_box };
+/**
+ * @param {bx} box1
+ * @param {bx} box2
+ */
+let box_equals = (box1, box2) => {
+    if(box1.x !== box2.x || box1.y !== box2.y) return false;
+    if(box1.children.length != box2.children.length) return false;
+    let cnt = 0;
+    for(let c1 of box1.children) {
+        let found = false;
+        for(let c2 of box2.children) {
+            if(box_equals(c1, c2)) {
+                cnt++;
+                found = true;
+                break;
+            }
+        }
+        if(!found) return false;
+    }
+    return cnt == box1.children.length;
+}
+
+export { wipe_box, remove_box, create_box, get_child, tick_box, box_equals };

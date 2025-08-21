@@ -11,6 +11,7 @@ import { create_box, get_child } from "./box.js"
  * @param {bx} main_box
  */
 
+//TODO there are two different types named camera
 const create_camera = (x, y, main_box) => {
     /** @type {camera[]} */
     let camera_stack = [{ x, y, scale: 1, selected_box: main_box }];
