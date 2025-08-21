@@ -240,6 +240,7 @@ let apply_box = (base_box, applied_box, parent) => {
         } else {
             decrease_degree(c, base_box);
         }
+        c.last_movement_tick = get_current_tick();
     }
     remove_box(applied_box, parent);
 }
@@ -316,9 +317,11 @@ let tick_box = (box) => {
     let box_stack = []
     for(let c of box.children)
         box_stack.push([c, box]); //[0] -> box, [1] -> box's parent
-    while(box_stack.length) {
+    let head = 0;
+    while(head < box_stack.length) {
         //TODO: fix type bugs
-        let b = box_stack.pop();
+        let b = box_stack[head++];
+        //TODO: fix this last_movement_tick trainwreck
         if(b[0].last_movement_tick != get_current_tick())
             box_check(b[0], b[1]);
         for(let c of b[0].children)
