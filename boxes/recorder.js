@@ -1,5 +1,5 @@
 /** @typedef {ReturnType<import("./game.js").create_game>} game */
-/** @typedef {ReturnType<game["get_game_state"]>} game_state*/
+/** @typedef {ReturnType<game["export_game_state"]>} game_state*/
 
 /** @enum {string} */
 const record_type = /** @type {const} */ {
@@ -40,7 +40,7 @@ let create_recorder = (game) => {
         is_recording: false,
         start_recording() {
             ret.is_recording = true;
-            ret.game_record.start_state = ret.get_game_state();
+            ret.game_record.start_state = ret.export_game_state();
             ret.game_record.records = [];
             for(let i = 1;i < game.get_camera_depth();i++) {
                 ret.game_record.records.push({type: record_type.PUSH_CAMERA, 
@@ -50,7 +50,7 @@ let create_recorder = (game) => {
         },
         end_recording() {
             ret.is_recording = false;
-            ret.game_record.end_state = ret.get_game_state();
+            ret.game_record.end_state = ret.export_game_state();
             return ret.game_record;
         },
         ...game,

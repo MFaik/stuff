@@ -1,17 +1,17 @@
 /** 
  * @typedef {ReturnType<import("./game.js").create_game>} game
- * @typedef {ReturnType<game["get_game_state"]>} game_state
+ * @typedef {ReturnType<game["export_game_state"]>} game_state
  * @typedef {import("./recorder.js").game_record} game_record
  */
 
-import { box_equals } from "./box.js";
+import { is_box_equivalent } from "./box.js";
 import { create_game } from "./game.js";
 import { record_type } from "./recorder.js";
 
 /** @param {game_record} game_record */
 let create_replayer = (game_record) => {
     let game = create_game();
-    game.set_game_state(game_record.start_state);
+    game.import_game_state(game_record.start_state);
 
     let current_step = 0;
     let step = () => {
@@ -45,8 +45,8 @@ let create_replayer = (game_record) => {
     let is_accurate = () => {
         if(current_step < game_record.records.length)
             throw new Error("Calling is_accurate before finishing the simulation");
-        let game_state = game.get_game_state();
-        return box_equals(game_state.box, game_record.end_state.box) 
+        let game_state = game.export_game_state();
+        return is_box_equivalent(game_state.box, game_record.end_state.box) 
                && JSON.stringify(game_record.end_state.undo_stack) == JSON.stringify(game_state.undo_stack);
     }
 

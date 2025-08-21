@@ -11,8 +11,7 @@ import { create_box, get_child } from "./box.js"
  * @param {bx} main_box
  */
 
-//TODO there are two different types named camera
-const create_camera = (x, y, main_box) => {
+const create_camera_manager = (x, y, main_box) => {
     /** @type {camera[]} */
     let camera_stack = [{ x, y, scale: 1, selected_box: main_box }];
     return {
@@ -21,18 +20,18 @@ const create_camera = (x, y, main_box) => {
          * @param {number} x
          * @param {number} y
          */
-        push(x, y, selected_box) {
+        push_camera(x, y, selected_box) {
             const c = {x , y, scale: 1, selected_box};
             camera_stack.push(c);
             return c;
         },
-        pop() {
+        pop_camera() {
             camera_stack.pop();
         },
-        get_depth() {
+        get_stack_depth() {
             return camera_stack.length;
         },
-        get_current() {
+        get_current_camera() {
             return camera_stack[camera_stack.length-1];
         },
         get_main_box() { 
@@ -69,4 +68,4 @@ const create_camera = (x, y, main_box) => {
     }
 };
 
-export { create_camera };
+export { create_camera_manager };

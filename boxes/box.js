@@ -1,5 +1,6 @@
 /** @typedef {import('./types.js').bx} bx */
 
+//TODO make tick not global
 let tick = 0;
 let get_current_tick = () => tick;
 let increase_tick = () => tick++;
@@ -330,14 +331,14 @@ let tick_box = (box) => {
  * @param {bx} box1
  * @param {bx} box2
  */
-let box_equals = (box1, box2) => {
+let is_box_equivalent = (box1, box2) => {
     if(box1.x !== box2.x || box1.y !== box2.y) return false;
     if(box1.children.length != box2.children.length) return false;
     let cnt = 0;
     for(let c1 of box1.children) {
         let found = false;
         for(let c2 of box2.children) {
-            if(box_equals(c1, c2)) {
+            if(is_box_equivalent(c1, c2)) {
                 cnt++;
                 found = true;
                 break;
@@ -348,4 +349,4 @@ let box_equals = (box1, box2) => {
     return cnt == box1.children.length;
 }
 
-export { wipe_box, remove_box, create_box, get_child, tick_box, box_equals };
+export { wipe_box, remove_box, create_box, get_child, tick_box, is_box_equivalent };

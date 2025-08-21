@@ -3,8 +3,8 @@
  * @typedef {import('./types.js').bx} bx
  */
 
-import { create_camera } from "./camera.js"
-/** @typedef {ReturnType<create_camera>} camera_manager */
+import { create_camera_manager } from "./camera.js"
+/** @typedef {ReturnType<create_camera_manager>} camera_manager */
 import { wipe_box, remove_box, tick_box } from "./box.js"
 
 const UndoTypes = {
@@ -21,11 +21,11 @@ let create_game = () => {
         last_movement_tick: -1,
         name: "",
     };
-    let camera = create_camera(width/2, height/2, main_box);
+    let camera_manager = create_camera_manager(width/2, height/2, main_box);
 
     /** @param {bx} box */
     let push_camera = (box) => {
-        camera.push(width/2, height/2, box);
+        camera_manager.push_camera(width/2, height/2, box);
     }
 
     //undo type is any because otherwise it adds way too much boilerplate
@@ -63,40 +63,39 @@ let create_game = () => {
     let undo = () => {
         let undo_obj = undo_stack.pop();
         if(!undo_obj) {
-            load_game()
+            pop_game_snapshot()
             return;
         }
         if(undo_obj.type == UndoTypes.CAMERA_PUSH) {
-            let b = camera.get_child_current(undo_obj.x, undo_obj.y);
+            let b = camera_manager.get_child_current(undo_obj.x, undo_obj.y);
             if(!b) throw new Error("trying to go into a box that doesn't exists");
             push_camera(b);
-            let c = camera.get_current();
+            let c = camera_manager.get_current_camera();
             c.x = undo_obj.cam_x;
             c.y = undo_obj.cam_y;
             c.scale = undo_obj.cam_scale;
         } else if(undo_obj.type == UndoTypes.CAMERA_POP) {
-            camera.pop();
+            camera_manager.pop_camera();
         } else if(undo_obj.type == UndoTypes.BOX_REMOVE) {
-            let child = camera.get_child_current(undo_obj.x, undo_obj.y);
+            let child = camera_manager.get_child_current(undo_obj.x, undo_obj.y);
             if(!child) throw new Error("trying to undo remove a box that doesn't exists");
-            remove_box(child, camera.get_current_box());
+            remove_box(child, camera_manager.get_current_box());
         } else if(undo_obj.type == UndoTypes.BOX_ADD) {
             undo_obj.parent.children.push(undo_obj.box);
         }
     }
 
-    //TODO there are two different types called game_state
     /** @type {{camera_snapshot: camera[], undo_stack: any[]}[]} */
-    let game_states = [];
-    let push_game_state = () => {
-        game_states.push({camera_snapshot: camera.get_snapshot(), undo_stack});
+    let game_snapshots = [];
+    let push_game_snapshot = () => {
+        game_snapshots.push({camera_snapshot: camera_manager.get_snapshot(), undo_stack});
         undo_stack = [];
     }
-    let load_game = () => {
-        let save = game_states.pop();
+    let pop_game_snapshot = () => {
+        let save = game_snapshots.pop();
         if(save) {
-            wipe_box(camera.get_main_box());
-            camera.restore_snapshot(save.camera_snapshot);
+            wipe_box(camera_manager.get_main_box());
+            camera_manager.restore_snapshot(save.camera_snapshot);
             undo_stack = save.undo_stack;
         }
     }
@@ -106,12 +105,12 @@ let create_game = () => {
      * @param {number} y
      */
     let left_click = (x, y) => {
-        let b = camera.get_child_current(x, y);
+        let b = camera_manager.get_child_current(x, y);
         if(b) {
             push_camera(b)
             push_undo_camera_pop();
         } else {
-            camera.push_box_current(x, y);
+            camera_manager.push_box_current(x, y);
             push_undo_box_remove(x, y);
         }
     }
@@ -120,58 +119,58 @@ let create_game = () => {
      * @param {number} y
      */
     let right_click = (x, y) => {
-        let b = camera.get_child_current(x, y);
+        let b = camera_manager.get_child_current(x, y);
         if(b) {
-            push_undo_box_add(b, camera.get_current_box());
-            remove_box(b, camera.get_current_box(), true);
+            push_undo_box_add(b, camera_manager.get_current_box());
+            remove_box(b, camera_manager.get_current_box(), true);
         }
     }
 
     /** @param {bx} box */
     let step_box = (box) => {
-        push_game_state();
+        push_game_snapshot();
 
         tick_box(box);
-        let current_box = camera.get_current_box();
-        while((!current_box || current_box.x === Infinity) && camera.get_depth() > 1) {
-            camera.pop();
-            current_box = camera.get_current_box();
+        let current_box = camera_manager.get_current_box();
+        while((!current_box || current_box.x === Infinity) && camera_manager.get_stack_depth() > 1) {
+            camera_manager.pop_camera();
+            current_box = camera_manager.get_current_box();
         }
     }
     let step_game = () => {
-        step_box(camera.get_main_box());
+        step_box(camera_manager.get_main_box());
     }
 
     let pop_camera = () => {
-        if(camera.get_depth() > 1) {
-            let b = camera.get_current_box();
-            let c = camera.get_current();
+        if(camera_manager.get_stack_depth() > 1) {
+            let b = camera_manager.get_current_box();
+            let c = camera_manager.get_current_camera();
             push_undo_camera_push(b.x, b.y, c.x, c.y, c.scale);
-            camera.pop();
+            camera_manager.pop_camera();
         }
     }
-    /** @type {camera_manager["get_current"]} */
-    let get_current_camera = () => camera.get_current();
-    /** @type {camera_manager["get_depth"]} */
-    let get_camera_depth = () => camera.get_depth();
+    /** @type {camera_manager["get_current_camera"]} */
+    let get_current_camera = (...args) => camera_manager.get_current_camera(...args);
+    /** @type {camera_manager["get_stack_depth"]} */
+    let get_camera_depth = (...args) => camera_manager.get_stack_depth(...args);
     /** @type {camera_manager["get_box_at_depth"]} */
-    let get_box_at_depth = (...args) => camera.get_box_at_depth(...args);
-    let get_current_box_name = () => camera.get_current_box().name;
+    let get_box_at_depth = (...args) => camera_manager.get_box_at_depth(...args);
+    let get_current_box_name = () => camera_manager.get_current_box().name;
     /** @param {string} name */
-    let set_current_box_name = (name) => camera.get_current_box().name = name;
+    let set_current_box_name = (name) => camera_manager.get_current_box().name = name;
 
     /** @type {camera_manager["get_child_current"]} */
-    let get_current_child = (...args) => camera.get_child_current(...args);
+    let get_current_child = (...args) => camera_manager.get_child_current(...args);
     /** @typedef {{box: bx, undo_stack: any[]}} game_state */
     /** @return {game_state} */
-    let get_game_state = () => {
-        return structuredClone({box: camera.get_box_at_depth(0), undo_stack});
+    let export_game_state = () => {
+        return structuredClone({box: camera_manager.get_box_at_depth(0), undo_stack});
     }
     /** @param {game_state} game_state */
-    let set_game_state = (game_state) => {
-        camera.get_box_at_depth(0).children = game_state.box.children;
+    let import_game_state = (game_state) => {
+        camera_manager.get_box_at_depth(0).children = game_state.box.children;
         //TODO remove this
-        camera.get_current().x = width/2;camera.get_current().y = height/2;
+        camera_manager.get_current_camera().x = width/2;camera_manager.get_current_camera().y = height/2;
         undo_stack = game_state.undo_stack;
     }
 
@@ -179,7 +178,7 @@ let create_game = () => {
              undo, left_click, right_click, 
              get_current_camera, get_camera_depth, pop_camera, 
              get_current_box_name, set_current_box_name, get_box_at_depth, get_current_child,
-             step_game, get_game_state, set_game_state };
+             step_game, export_game_state, import_game_state };
 }
 
 export { create_game };
