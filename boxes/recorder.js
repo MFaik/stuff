@@ -94,6 +94,8 @@ let create_recorder = (game) => {
  * @param {game_recorder|game} game
  * @returns {game is game_recorder}
  */
+//TODO get rid of this function
+//it slows the game just to satisfy the type system
 let is_game_recorder = (game) => {
     return "game_record" in game;
 }

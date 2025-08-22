@@ -169,8 +169,10 @@ let create_game = () => {
     /** @param {game_state} game_state */
     let import_game_state = (game_state) => {
         camera_manager.get_box_at_depth(0).children = game_state.box.children;
-        //TODO remove this
-        camera_manager.get_current_camera().x = width/2;camera_manager.get_current_camera().y = height/2;
+        let c = camera_manager.get_current_camera();
+        c.x = width/2;
+        c.y = height/2;
+        c.scale = 1;
         undo_stack = game_state.undo_stack;
     }
 

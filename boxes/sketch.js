@@ -9,7 +9,11 @@ import { create_game } from "./game.js"
 import { create_recorder, is_game_recorder } from "./recorder.js"
 import { create_replayer } from "./replayer.js";
 
+let show_help = true;
+
 const tile_size = 40;
+const help_text_size = 20;
+const box_text_size = 16;
 /** @type {ReturnType<typeof create_game>|ReturnType<typeof create_recorder>} */
 let game;
 /** @type {ReturnType<typeof create_replayer>} */
@@ -20,17 +24,18 @@ let input;
 let is_replaying = false;
 
 const params = new URLSearchParams(window.location.search);
+let can_record = params.has('record');
 /** @ts-ignore */
 window.setup = function() {
-    game = create_game();
-    if(params.has('record')) {
-        console.log("recording is enabled");
-        game = create_recorder(game);
-    }
-
     let cnv = createCanvas(windowWidth, windowHeight);
     cnv.drop(handleFile);
     noStroke();
+
+    game = create_game();
+    if(can_record) {
+        console.log("recording is enabled");
+        game = create_recorder(game);
+    }
 
     input = createInput();
     reset_input_state();
@@ -47,6 +52,9 @@ let handleFile = (file) => {
         if("end_state" in json) {
             replayer = create_replayer(json);
             is_replaying = true;
+        } else if("box" in json) {
+            console.log(json.box);
+            game.import_game_state({box: json.box, undo_stack: []});
         }
     }
 }
@@ -54,7 +62,7 @@ let handleFile = (file) => {
 let stop_replaying = () => {
     is_replaying = false;
     game = replayer.game;
-    if(params.has('record')) {
+    if(can_record) {
         game = create_recorder(game);
     }
 }
@@ -63,13 +71,22 @@ let stop_replaying = () => {
 window.draw = function() {
     if(!is_replaying) {
         draw_game(game);
+        //TODO replace with can_record
+        if(is_game_recorder(game) && game.is_recording) {
+            fill(255, 0, 0);
+            rect(10, 40, 30);
+            fill(255);
+        }
+    
+        if(show_help) draw_game_help();
     } else {
-        push();
         draw_game(replayer.game);
-        pop();
+
         fill(0, 0, 255);
         triangle(40, 60, 10, 40, 10, 80);
         fill(255);
+
+        if(show_help) draw_replay_help();
     }
 }
 
@@ -77,12 +94,6 @@ window.draw = function() {
 let draw_game = (game) => {
     background(30+game.get_camera_depth()*10, 10, 10);
 
-    if(is_game_recorder(game) && game.is_recording) {
-        fill(255, 0, 0);
-        rect(10, 40, 30);
-        fill(255);
-    }
-    
     for(let i = 0;i < game.get_camera_depth()-1;i++) {
         draw_box_at_place(5+i*30, 5, 30, 2, game.get_box_at_depth(i));
     }
@@ -94,20 +105,21 @@ let draw_game = (game) => {
     if(keyIsDown(DOWN_ARROW)) c.y -= c.scale*deltaTime;
     if(keyIsDown(UP_ARROW)) c.y += c.scale*deltaTime;
 
+    push();
     translate(c.x, c.y)
     scale(c.scale)
-
-    let mouse_over_box = undefined;
-    for(let box of c.selected_box.children) {
-        if(is_inside_camera_boundry(c, box)) {
-            draw_box(box)
-            if(box.name && is_mouse_over(c, box))
-                mouse_over_box = box;
+        let mouse_over_box = undefined;
+        for(let box of c.selected_box.children) {
+            if(is_inside_camera_boundry(c, box)) {
+                draw_box(box)
+                if(box.name && is_mouse_over(c, box))
+                    mouse_over_box = box;
+            }
         }
-    }
-    if(mouse_over_box) {
-        draw_box_text(mouse_over_box);
-    }
+        if(mouse_over_box) {
+            draw_box_text(mouse_over_box);
+        }
+    pop();
 }
 
 /** 
@@ -180,11 +192,72 @@ let draw_box = (box) => {
 
 /** @param {bx} box */
 let draw_box_text = (box) => {
+    if(!box.name)return;
+    textSize(box_text_size);
+    let x = box.x*tile_size+tile_size/2-textWidth(box.name)/2;
+    let y = box.y*tile_size-box_text_size;
+    fill(255, 50);
+    rect(x-5, y-3-box_text_size, textWidth(box.name)+10, box_text_size+10);
     fill(255);
-    //we check if the box has name earlier so here it must have a name
-    /** @ts-ignore *///TODO remove this ts-ignore somehow?
-    text(box.name, box.x*tile_size+tile_size/2-textWidth(box.name)/2, 
-         box.y*tile_size-textAscent()-textDescent());
+    text(box.name, x, y);
+}
+
+/** @typedef {[string, string][]} help_texts */
+/** @type help_texts */
+const game_help_texts = [
+    ['h', 'close this help box'],
+    ['left click on empty cell', 'create a box'], 
+    ['left click on a box', 'go into the box'],
+    ['right click on a box', 'remove the box'],
+    ['escape', 'go up one layer'],
+    ['s', 'step the simulation'],
+    ['z', 'undo'],
+    ['enter a name at the top', 'for the box you are in'],
+    ['c', 'save game to a file'],
+];
+if(can_record)
+    game_help_texts.push(['r', 'record the game']);
+let draw_game_help = () => {
+    draw_help(game_help_texts);
+}
+
+/** @type help_texts */
+const replay_help_texts = [
+    ['h', 'close this help box'],
+    ['escape', 'exit replay'],
+    ['s', 'step the replay'],
+];
+let draw_replay_help = () => {
+    draw_help(replay_help_texts);
+}
+
+/** @param {help_texts} help_texts */
+let draw_help = (help_texts) => {
+    textSize(20);
+    let text_height = textSize();
+    let total_text_height = text_height*help_texts.length;
+    let max_text_width = 0;
+    let max_button_width = 0;
+    let splitter = ' - ';
+    for(let h of help_texts) {
+        let w = textWidth(h[0]+splitter+h[1]);
+        if(max_text_width < w)
+            max_text_width = w;
+        max_button_width = max(max_button_width, textWidth(h[0]));
+    }
+
+    let x_offset = 0;
+    let y_offset = height-total_text_height-30;
+    fill(255, 50);
+    rect(x_offset, y_offset, max_text_width+30, total_text_height+20);
+    fill(200, 200, 200);
+    for(let i = 0;i < help_texts.length;i++) {
+        let curr_help = help_texts[i];
+        text(curr_help[0], x_offset+10, y_offset+(i+1)*text_height+10);
+        text(splitter + curr_help[1], x_offset+10+max_button_width, y_offset+(i+1)*text_height+10);
+
+    }
+    fill(255);
 }
 
 let reset_input_state = () => {
@@ -236,6 +309,10 @@ window.mouseWheel = function(event) {
 }
 
 window.addEventListener('keydown', (e) => {
+    if(e.key == 'h') {
+        show_help = !show_help;
+    }
+
     if(is_replaying) {
         if(e.key == 's') {
             if(!replayer.step()) {
@@ -262,7 +339,10 @@ window.addEventListener('keydown', (e) => {
         game.step_game();
     } else if(e.key == 'z') {
         game.undo();
+    } else if (e.key == 'c') {
+        save_object({box: game.export_game_state().box}, "box.json");
     } else if(e.key == 'r') {
+        //TODO replace with can_record
         if(is_game_recorder(game)) {
             if(!game.is_recording)
                 game.start_recording();
