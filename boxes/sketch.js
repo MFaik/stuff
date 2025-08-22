@@ -99,13 +99,13 @@ let draw_game = (game) => {
 
     let c = game.get_current_camera();
 
-    if(keyIsDown(RIGHT_ARROW)) c.x -= c.scale*deltaTime;
-    if(keyIsDown(LEFT_ARROW)) c.x += c.scale*deltaTime;
-    if(keyIsDown(DOWN_ARROW)) c.y -= c.scale*deltaTime;
-    if(keyIsDown(UP_ARROW)) c.y += c.scale*deltaTime;
+    if(keyIsDown(RIGHT_ARROW)) c.x += c.scale*deltaTime;
+    if(keyIsDown(LEFT_ARROW)) c.x -= c.scale*deltaTime;
+    if(keyIsDown(DOWN_ARROW)) c.y += c.scale*deltaTime;
+    if(keyIsDown(UP_ARROW)) c.y -= c.scale*deltaTime;
 
     push();
-    translate(c.x, c.y)
+    translate(-c.x, -c.y)
     scale(c.scale)
         let mouse_over_box = undefined;
         for(let box of c.selected_box.children) {
@@ -128,8 +128,8 @@ let draw_game = (game) => {
  */
 let is_inside_camera_boundry = (camera, box) => {
     let current_tile_size = tile_size*camera.scale;
-    let x = box.x*current_tile_size+camera.x;
-    let y = box.y*current_tile_size+camera.y;
+    let x = box.x*current_tile_size-camera.x;
+    let y = box.y*current_tile_size-camera.y;
     return x <= width && y <= height &&
            x+current_tile_size >= 0 && y+current_tile_size >= 0;
 }
@@ -141,8 +141,8 @@ let is_inside_camera_boundry = (camera, box) => {
  */
 let is_mouse_over = (camera, box) => {
     let current_tile_size = tile_size*camera.scale;
-    let x = box.x*current_tile_size+camera.x;
-    let y = box.y*current_tile_size+camera.y;
+    let x = box.x*current_tile_size-camera.x;
+    let y = box.y*current_tile_size-camera.y;
     return mouseX <= x+current_tile_size && mouseY <= y+current_tile_size &&
            mouseX >= x && mouseY >= y;
 }
@@ -282,10 +282,10 @@ window.mousePressed = function(event) {
         return;
     }
     let current_camera = game.get_current_camera();
-    let x = mouseX - current_camera.x;
+    let x = mouseX + current_camera.x;
     x /= current_camera.scale*tile_size;
     x = floor(x);
-    let y = mouseY - current_camera.y;
+    let y = mouseY + current_camera.y;
     y /= current_camera.scale*tile_size;
     y = floor(y);
 
@@ -299,12 +299,15 @@ window.mousePressed = function(event) {
 }
 
 window.mouseWheel = function(event) {
-    if(is_replaying) return;
     /** @ts-ignore */
     let d = event.delta;
     let c = game.get_current_camera();
+    let old_scale = c.scale;
     c.scale += d * -0.001;
     c.scale = constrain(c.scale, 0.5, 2);
+    console.log(c.x+' + '+ mouseX*old_scale + ' - ' + c.scale*width/2);
+    c.x = (c.x+mouseX)*c.scale/old_scale-mouseX;
+    c.y = (c.y+mouseY)*c.scale/old_scale-mouseY;
     return false;
 }
 
