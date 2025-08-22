@@ -54,7 +54,6 @@ let handleFile = (file) => {
             is_replaying = true;
             input.hide();
         } else if("box" in json) {
-            console.log(json.box);
             game.import_game_state({box: json.box, undo_stack: []});
         }
     }
@@ -305,7 +304,6 @@ window.mouseWheel = function(event) {
     let old_scale = c.scale;
     c.scale += d * -0.001;
     c.scale = constrain(c.scale, 0.5, 2);
-    console.log(c.x+' + '+ mouseX*old_scale + ' - ' + c.scale*width/2);
     c.x = (c.x+mouseX)*c.scale/old_scale-mouseX;
     c.y = (c.y+mouseY)*c.scale/old_scale-mouseY;
     return false;

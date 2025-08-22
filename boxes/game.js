@@ -21,11 +21,11 @@ let create_game = () => {
         last_movement_tick: -1,
         name: "",
     };
-    let camera_manager = create_camera_manager(width/2, height/2, main_box);
+    let camera_manager = create_camera_manager(-width/2, -height/2, main_box);
 
     /** @param {bx} box */
     let push_camera = (box) => {
-        camera_manager.push_camera(width/2, height/2, box);
+        camera_manager.push_camera(-width/2, -height/2, box);
     }
 
     //undo type is any because otherwise it adds way too much boilerplate
@@ -170,8 +170,8 @@ let create_game = () => {
     let import_game_state = (game_state) => {
         camera_manager.get_box_at_depth(0).children = game_state.box.children;
         let c = camera_manager.get_current_camera();
-        c.x = width/2;
-        c.y = height/2;
+        c.x = -width/2;
+        c.y = -height/2;
         c.scale = 1;
         undo_stack = game_state.undo_stack;
     }
