@@ -52,6 +52,7 @@ let handleFile = (file) => {
         if("end_state" in json) {
             replayer = create_replayer(json);
             is_replaying = true;
+            input.hide();
         } else if("box" in json) {
             console.log(json.box);
             game.import_game_state({box: json.box, undo_stack: []});
@@ -75,7 +76,6 @@ window.draw = function() {
         if(is_game_recorder(game) && game.is_recording) {
             fill(255, 0, 0);
             rect(10, 40, 30);
-            fill(255);
         }
     
         if(show_help) draw_game_help();
@@ -84,7 +84,6 @@ window.draw = function() {
 
         fill(0, 0, 255);
         triangle(40, 60, 10, 40, 10, 80);
-        fill(255);
 
         if(show_help) draw_replay_help();
     }
@@ -156,6 +155,7 @@ let is_mouse_over = (camera, box) => {
  * @param {bx} box
  */
 let draw_box_at_place = (x, y, default_size, default_offset, box) => {
+    fill(255);
     rect(x+default_offset, 
          y+default_offset, default_size-default_offset*2);
     if(box.children.length == 0)return;
@@ -181,7 +181,6 @@ let draw_box_at_place = (x, y, default_size, default_offset, box) => {
              (c.y-u)*box_default_size+y+default_offset*2, 
              max(2, ceil(box_default_size)));
     }
-    fill(255);
 }
 
 /** @param {bx} box */
@@ -196,9 +195,9 @@ let draw_box_text = (box) => {
     textSize(box_text_size);
     let x = box.x*tile_size+tile_size/2-textWidth(box.name)/2;
     let y = box.y*tile_size-box_text_size;
-    fill(255, 50);
+    fill(255, 200);
     rect(x-5, y-3-box_text_size, textWidth(box.name)+10, box_text_size+10);
-    fill(255);
+    fill(0);
     text(box.name, x, y);
 }
 
@@ -237,14 +236,12 @@ let draw_replay_help = () => {
 
 /** @param {help_texts} help_texts */
 let draw_help = (help_texts) => {
-    textSize(20);
-    let text_height = textSize();
-    let total_text_height = text_height*help_texts.length;
+    textSize(help_text_size);
+    let total_text_height = help_text_size*help_texts.length;
     let max_help_width = 0;
     let max_button_width = 0;
     let splitter = ' - ';
     for(let h of help_texts) {
-        let w = textWidth(h[0]+splitter+h[1]);
         max_button_width = max(max_button_width, textWidth(h[0]));
         max_help_width = max(max_help_width, textWidth(h[1]));
     }
@@ -256,11 +253,11 @@ let draw_help = (help_texts) => {
     fill(200, 200, 200);
     for(let i = 0;i < help_texts.length;i++) {
         let curr_help = help_texts[i];
-        text(curr_help[0], x_offset+10, y_offset+(i+1)*text_height+10);
-        text(splitter + curr_help[1], x_offset+10+max_button_width, y_offset+(i+1)*text_height+10);
+        text(curr_help[0], x_offset+10, y_offset+(i+1)*help_text_size+10);
+        text(splitter + curr_help[1], 
+             x_offset+10+max_button_width, y_offset+(i+1)*help_text_size+10);
 
     }
-    fill(255);
 }
 
 let reset_input_state = () => {
@@ -312,10 +309,14 @@ window.mouseWheel = function(event) {
 }
 
 window.addEventListener('keydown', (e) => {
+    if(input.elt == document.activeElement) {
+        if(e.key == 'Escape' || e.key == 'Enter')
+            input.elt.blur();
+        return;
+    }
     if(e.key == 'h') {
         show_help = !show_help;
     }
-
     if(is_replaying) {
         if(e.key == 's') {
             if(!replayer.step()) {
@@ -329,11 +330,6 @@ window.addEventListener('keydown', (e) => {
         } else if(e.key == 'Escape' || e.key == 'e') {
             stop_replaying();
         }
-        return;
-    }
-    if(input.elt == document.activeElement) {
-        if(e.key == 'Escape' || e.key == 'Enter')
-            input.elt.blur();
         return;
     }
     if(e.key == 'Escape' || e.key == 'e') {
