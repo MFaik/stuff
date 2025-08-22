@@ -206,6 +206,8 @@ let draw_box_text = (box) => {
 /** @type help_texts */
 const game_help_texts = [
     ['h', 'close this help box'],
+    ['arrow keys', 'move camera around'],
+    ['scroll wheel', 'scale the camera'],
     ['left click on empty cell', 'create a box'], 
     ['left click on a box', 'go into the box'],
     ['right click on a box', 'remove the box'],
@@ -224,8 +226,10 @@ let draw_game_help = () => {
 /** @type help_texts */
 const replay_help_texts = [
     ['h', 'close this help box'],
-    ['escape', 'exit replay'],
+    ['arrow keys', 'move camera around'],
+    ['scroll wheel', 'scale the camera'],
     ['s', 'step the replay'],
+    ['escape', 'exit replay'],
 ];
 let draw_replay_help = () => {
     draw_help(replay_help_texts);
@@ -236,20 +240,19 @@ let draw_help = (help_texts) => {
     textSize(20);
     let text_height = textSize();
     let total_text_height = text_height*help_texts.length;
-    let max_text_width = 0;
+    let max_help_width = 0;
     let max_button_width = 0;
     let splitter = ' - ';
     for(let h of help_texts) {
         let w = textWidth(h[0]+splitter+h[1]);
-        if(max_text_width < w)
-            max_text_width = w;
         max_button_width = max(max_button_width, textWidth(h[0]));
+        max_help_width = max(max_help_width, textWidth(h[1]));
     }
 
     let x_offset = 0;
     let y_offset = height-total_text_height-30;
     fill(255, 50);
-    rect(x_offset, y_offset, max_text_width+30, total_text_height+20);
+    rect(x_offset, y_offset, max_button_width+max_help_width+textWidth(splitter)+30, total_text_height+20);
     fill(200, 200, 200);
     for(let i = 0;i < help_texts.length;i++) {
         let curr_help = help_texts[i];
