@@ -5,7 +5,7 @@
 
 import { create_camera_manager } from "./camera.js"
 /** @typedef {ReturnType<create_camera_manager>} camera_manager */
-import { wipe_box, remove_box, tick_box } from "./box.js"
+import { wipe_box, remove_box, step_box } from "./box.js"
 
 const UndoTypes = {
     CAMERA_PUSH: 1,
@@ -126,19 +126,20 @@ let create_game = () => {
         }
     }
 
-    /** @param {bx} box */
-    let step_box = (box) => {
+    let step_game = () => {
         push_game_snapshot();
-
-        tick_box(box);
+        
+        let box = camera_manager.get_main_box();
+        //TODO this is really wasteful
+        //add a caching system for "to be moved" boxes to speed up the game
+        if(!step_box(box)) {
+            pop_game_snapshot();
+        }
         let current_box = camera_manager.get_current_box();
         while((!current_box || current_box.x === Infinity) && camera_manager.get_stack_depth() > 1) {
             camera_manager.pop_camera();
             current_box = camera_manager.get_current_box();
         }
-    }
-    let step_game = () => {
-        step_box(camera_manager.get_main_box());
     }
 
     let pop_camera = () => {

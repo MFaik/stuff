@@ -262,7 +262,7 @@ let try_move = (dx, dy, box, parent) => {
  * @param {bx} parent
  */
 let box_check = (box, parent) => {
-    if(box.children.length != 3) return;
+    if(box.children.length != 3) return false;
     for(let anchor = 0;anchor < 3;anchor++) {
         //shape detection
         let ai = anchor, bi = anchor+1, ci = anchor+2;
@@ -276,14 +276,15 @@ let box_check = (box, parent) => {
         let d = (a.x == b.x && a.y == b.y+1) || (a.x == c.x && a.y == c.y+1);
         //movement
         if(l && u)
-            if(try_move(1, -1, box, parent)) return;
+            if(try_move(1, -1, box, parent)) return true;
         if(r && u)
-            if(try_move(-1, -1, box, parent)) return;
+            if(try_move(-1, -1, box, parent)) return true;
         if(l && d)
-            if(try_move(1, 1, box, parent)) return;
+            if(try_move(1, 1, box, parent)) return true;
         if(r && d)
-            if(try_move(-1, 1, box, parent)) return;
+            if(try_move(-1, 1, box, parent)) return true;
     }
+    return false;
 }
 /**
  * @param {number} x_offset
@@ -310,9 +311,10 @@ let move_box = (x_offset, y_offset, box, parent) => {
 }
 
 /** @param {bx} box */
-let tick_box = (box) => {
+let step_box = (box) => {
     increase_tick();
 
+    let has_changed = false;
     /** @type {[bx, bx][]} */
     let box_stack = []
     for(let c of box.children)
@@ -323,11 +325,11 @@ let tick_box = (box) => {
         let b = box_stack[head++];
         //TODO: fix this last_movement_tick trainwreck
         if(b[0].last_movement_tick != get_current_tick())
-            box_check(b[0], b[1]);
+            has_changed ||= box_check(b[0], b[1]);
         for(let c of b[0].children)
             box_stack.push([c, b[0]]);
     }
-
+    return has_changed;
 }
 
 /**
@@ -352,4 +354,4 @@ let is_box_equivalent = (box1, box2) => {
     return cnt == box1.children.length;
 }
 
-export { wipe_box, remove_box, create_box, get_child, tick_box, is_box_equivalent };
+export { wipe_box, remove_box, create_box, get_child, step_box, is_box_equivalent };
