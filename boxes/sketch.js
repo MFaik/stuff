@@ -272,6 +272,7 @@ let reset_input_size = () => {
     input.size(width/3);
 }
 
+window.addEventListener('contextmenu', e => e.preventDefault());
 window.mousePressed = function(event) {
     if(is_replaying) return;
     /** @ts-ignore */
