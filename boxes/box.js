@@ -325,7 +325,7 @@ let step_box = (box) => {
         let b = box_stack[head++];
         //TODO: fix this last_movement_tick trainwreck
         if(b[0].last_movement_tick != get_current_tick())
-            has_changed ||= box_check(b[0], b[1]);
+            has_changed = box_check(b[0], b[1]) || has_changed;
         for(let c of b[0].children)
             box_stack.push([c, b[0]]);
     }
